@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTC Examples</title>
+
+    <script src="./btc.js"></script>
+</head>
+<body>
+
+    <h2>Keypairs</h2>
+
+    <h3>Generate Random</h3>
+    <button id="buttonGenerateKeypair">Generate</button>
+    <hr />
+
+    <h3> Mmnemonic</h3>
+
+    <h4>Generate</h4>
+    <button id="buttonGenerateMnemonic">Generate</button>
+
+
+    <h4>Import</h4>
+
+    <textarea id="inputImportMnemonic" rows="4" cols="32">entire taste skull already invest view turtle surge razor key next buffalo venue canoe sheriff winner wash ten subject hamster scrap unit shield garden</textarea>
+    <br />
+    <label>Index</label>
+    <input type="number" id="inputImportMnemonicIndex" value="0" />
+
+    <button id="buttonImportMnemonic">Import</button>
+
+ 
+
+    <hr />
+    <h3>Wif</h3>
+    <textarea id="inputImportWif" rows="4" cols="32">cPQ5kbnuj8YmBoCaFmsPsZENVykN1GGmF18mg6sEZsJPX2np6PRa</textarea>
+    <br />
+    <button id="buttonImportWif">Import</button>
+
+    <hr />
+
+    <h3>Email/Password</h3>
+    <input id="inputEmail" value="tyler@tylersavery.com" placeholder="Email">
+    <input id="inputPassword" value="younotry" placeholder="Password">
+    <input type="number" id="inputEmailPasswordIndex" value="0" placeholder="index" />
+    <button id="buttonEmailPassword">Login</button>
+
+
+
+
+
+    <script>
+
+        const keypairService = new btc.KeypairService(true);
+
+        window.onload = () => {
+
+            const buttonGenerateKeypair = document.getElementById("buttonGenerateKeypair");
+            buttonGenerateKeypair.onclick = async () => {
+                const data = await keypairService.keypairFromRandom();
+                console.log(data);
+
+            }
+
+            const buttonImportMnemonic = document.getElementById("buttonImportMnemonic");
+            buttonImportMnemonic.onclick = async () => {
+                const mnemonic = document.getElementById('inputImportMnemonic').value.trim()
+                const index = parseInt(document.getElementById('inputImportMnemonicIndex').value)
+                const data = await keypairService.keypairFromMnemonic(mnemonic, index);
+                console.log(data);
+    
+            }
+
+            const buttonGenerateMnemonic = document.getElementById("buttonGenerateMnemonic");
+            buttonGenerateMnemonic.onclick = async () => {
+                const data = await keypairService.keypairFromRandomMnemonic();
+                console.log(data);
+            }
+
+            const buttonWif = document.getElementById("buttonImportWif");
+            buttonWif.onclick = async () => {
+                const wif = document.getElementById('inputImportWif').value;
+                const data = await keypairService.keypairFromWif(wif);
+                console.log(data);
+            }
+
+            const buttonEmailPassword = document.getElementById("buttonEmailPassword");
+            buttonEmailPassword.onclick = async () => {
+                const email = document.getElementById('inputEmail').value.trim();
+                const password = document.getElementById('inputPassword').value;
+                const index = parseInt(document.getElementById('inputEmailPasswordIndex').value)
+                const data = await keypairService.keypairFromEmailPassword(email, password, index);
+                console.log(data);
+    
+            }
+        }
+    </script>
+
+</body>
+
+
+</html>
