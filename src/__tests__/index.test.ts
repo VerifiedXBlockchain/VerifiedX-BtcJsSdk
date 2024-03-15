@@ -1,4 +1,7 @@
 import KeypairService from '../btc/keypair';
+import TransactionService from '../btc/transaction';
+import AccountService from '../btc/account';
+import { BTC_TO_SATOSHI_MULTIPLIER, SATOSHI_TO_BTC_MULTIPLIER } from '../btc/constants';
 
 describe('Keypairs', () => {
   let keypairService: KeypairService;
@@ -51,6 +54,94 @@ describe('Keypairs', () => {
     expect(data).toBeTruthy();
     expect(data.address).toEqual("tb1qwh4zgpkysn8j53flz303u8tn0nvj293ey72u3k")
   });
+
+
+});
+
+
+
+describe('Transactions', () => {
+  let transactionService: TransactionService;
+
+  beforeAll(() => {
+    transactionService = new TransactionService(true);
+  });
+
+  test('can create tx', async () => {
+
+    const senderWif = "cPQ5kbnuj8YmBoCaFmsPsZENVykN1GGmF18mg6sEZsJPX2np6PRa"
+    const senderAddress = "tb1qh0nx4epkftfz3gmztkg9qmcyez604q36snzg0n"
+    const recipientAddress = "tb1q4lahda9feljf695q473z4m8m7xhgzv35n6226q"
+    const amount = 0.000003
+
+    const data = await transactionService.createTransaction(senderWif, senderAddress, recipientAddress, amount);
+    expect(data.success).toEqual(true);
+    const hash = data.result?.tx.hash;
+    expect(hash).toBeTruthy();
+  });
+
+
+});
+
+
+
+describe('Account', () => {
+  let accountService: AccountService;
+
+  beforeAll(() => {
+    accountService = new AccountService(true);
+  });
+
+  test('can get address info', async () => {
+
+    const address = "tb1qh0nx4epkftfz3gmztkg9qmcyez604q36snzg0n"
+
+    const data = await accountService.addressInfo(address);
+    expect(data).toBeTruthy();
+    expect(data.balance).toBeTruthy();
+
+    const dataBtc = await accountService.addressInfo(address, false);
+    expect(dataBtc).toBeTruthy();
+    expect(dataBtc.balance).toEqual(data.balance * SATOSHI_TO_BTC_MULTIPLIER);
+
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+  });
+
+  test('can get transactions and outputs', async () => {
+
+    const address = "tb1qh0nx4epkftfz3gmztkg9qmcyez604q36snzg0n"
+
+    const data = await accountService.transactions(address);
+    expect(data).toBeTruthy();
+    expect(data.transactions.length).toBeGreaterThan(1);
+
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+  });
+
+  // test('can paginate txs', async () => {
+
+  //   const address = "tb1qh0nx4epkftfz3gmztkg9qmcyez604q36snzg0n"
+
+  //   const data = await accountService.transactions(address, 2);
+  //   expect(data).toBeTruthy();
+  //   expect(data.transactions.length).toBeGreaterThan(1);
+
+  //   const lastResult = data.transactions[data.transactions.length - 1];
+  //   const dataPage2 = await accountService.transactions(address, 2, lastResult.block_height);
+
+  //   await new Promise(resolve => setTimeout(resolve, 3000));
+
+
+  //   expect(dataPage2).toBeTruthy();
+  //   expect(dataPage2.transactions.length).toBeGreaterThan(1);
+
+  //   const page2lastResult = dataPage2.transactions[dataPage2.transactions.length - 1];
+
+  //   expect(page2lastResult.block_height).toBeLessThan(lastResult.block_height);
+
+  // });
 
 
 });

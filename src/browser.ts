@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { KeypairService } from "./index";
+import { KeypairService, TransactionService, AccountService } from "./index";
 
-(window as any).btc = { KeypairService };
+(window as any).btc = { KeypairService, TransactionService, AccountService };

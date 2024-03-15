@@ -48,12 +48,23 @@
     <button id="buttonEmailPassword">Login</button>
 
 
+    <h2>Transactions</h2>
+
+    <button id="buttonSendTx">Send TX</button>
+
+
+    <h3>Address Info</h3>
+    <input id="inputAddressInfo" value="tb1qh0nx4epkftfz3gmztkg9qmcyez604q36snzg0n" placeholder="BTC Address">
+    <button id="buttonAddressInfo">Get Info</button>
+
 
 
 
     <script>
 
         const keypairService = new btc.KeypairService(true);
+        const transactionService = new btc.TransactionService(true);
+        const accountService = new btc.AccountService(true);
 
         window.onload = () => {
 
@@ -94,6 +105,34 @@
                 const data = await keypairService.keypairFromEmailPassword(email, password, index);
                 console.log(data);
     
+            }
+
+            const buttonSendTx = document.getElementById('buttonSendTx');
+
+            buttonSendTx.onclick =  async() => {
+
+                const senderWif = "cPQ5kbnuj8YmBoCaFmsPsZENVykN1GGmF18mg6sEZsJPX2np6PRa"
+                const senderAddress = "tb1qh0nx4epkftfz3gmztkg9qmcyez604q36snzg0n"
+                const recipientAddress = "tb1q4lahda9feljf695q473z4m8m7xhgzv35n6226q"
+                const amount = 0.000003
+
+                const data = await transactionService.createTransaction(senderWif, senderAddress, recipientAddress, amount);
+
+                if(data.success) {
+                    console.log("Success")
+                    console.log("Tx Hash: ", data.result.tx.hash)
+                }else {
+                    console.log("Error")
+                    console.log(data.error)
+                }
+            }
+
+
+            const buttonAddressInfo = document.getElementById("buttonAddressInfo");
+            buttonAddressInfo.onclick = async () => {
+                const address = document.getElementById('inputAddressInfo').value.trim()
+                const data = await accountService.addressInfo(address);
+                console.log(data);
             }
         }
     </script>

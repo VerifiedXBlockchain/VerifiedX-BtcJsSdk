@@ -58,6 +58,7 @@
     "browserify": "^17.0.0",
     "ecpair": "^2.1.0",
     "esbuild": "^0.20.1",
-    "hdkey": "^2.1.0"
+    "hdkey": "^2.1.0",
+    "regtest-client": "^0.2.1"
   }
 }
