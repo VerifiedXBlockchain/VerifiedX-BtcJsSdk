@@ -155,7 +155,7 @@ const getWitnessUtxo = (out: any): any => {
 }
 
 export const createTx = async (toAddress: string, value: number, env: "mainnet" | "testnet", fromAddress: string) => {
-    const valueInSatoshi = value * 100000000;
+    const valueInSatoshi = Math.round(value * 100000000);
     if (!fromAddress || !toAddress || !value || !env) {
         return {
             code: 0,

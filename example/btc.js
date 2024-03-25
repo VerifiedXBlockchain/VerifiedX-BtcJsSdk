@@ -45640,7 +45640,7 @@
     return hashHex;
   }
   var createTx = async (toAddress, value, env, fromAddress) => {
-    const valueInSatoshi = value * 1e8;
+    const valueInSatoshi = Math.round(value * 1e8);
     if (!fromAddress || !toAddress || !value || !env) {
       return {
         code: 0,
@@ -45925,6 +45925,19 @@
         txCount: data.n_tx,
         unconfirmedTxCount: data.unconfirmed_n_tx,
         finalTxCount: data.final_n_tx
+      };
+    }
+    async transactions(address, limit = 50, before = null) {
+      let url = `https://api.blockcypher.com/v1/btc/${this.network === TESTNET3 ? "test3" : "main"}/addrs/${address}/full?limit=${limit}`;
+      if (before) {
+        url += `&before=${before}`;
+      }
+      const response = await fetch(url);
+      const data = await response.json();
+      const transactions = data["txs"];
+      return {
+        canLoadMore: data["hasMore"],
+        transactions
       };
     }
   };
