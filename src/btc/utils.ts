@@ -34,29 +34,14 @@ export const seedToPrivateKey = (seed: string, index = 0, network: bitcoin.Netwo
 
 export function hashSeed(seed: string) {
 
-    const seedBuffer = Buffer.from(seed, 'hex');
+    const seedBuffer = Buffer.from(seed);
     const hashBuffer = bitcoin.crypto.sha256(seedBuffer);
 
-    // Convert the resulting hash Buffer to a hexadecimal string
     const hashHex = hashBuffer.toString('hex');
 
     return hashHex;
 
 
-
-    // // Encode the seed string into a Uint8Array using TextEncoder
-    // const encoder = new TextEncoder();
-    // const data = encoder.encode(seed);
-
-    // // Use the SubtleCrypto interface to hash the data with SHA-256
-    // bitcoin.crypto.sha256(data);
-    // const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-
-    // // Convert the hash from an ArrayBuffer to a hexadecimal string
-    // const hashArray = Array.from(new Uint8Array(hashBuffer));
-    // const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-    // return hashHex;
 }
 
 

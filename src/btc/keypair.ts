@@ -91,6 +91,7 @@ export default class KeypairService {
             seed = hashSeed(seed)
         }
 
+
         const privateKey = seedToPrivateKey(seed, index, this.network);
         if (!privateKey) throw new Error('Invalid private key');
 
