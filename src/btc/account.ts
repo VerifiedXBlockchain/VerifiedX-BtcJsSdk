@@ -12,24 +12,28 @@ export default class AccountService {
     }
 
     public async addressInfo(address: string, inSatoshis = true) {
-        const url = `https://api.blockcypher.com/v1/btc/${this.network === TESTNET ? 'test3' : 'main'}/addrs/${address}/balance`;
+
+        const url = `https://mempool.space/${this.network == TESTNET ? 'testnet4' : ''}/api/address/${address}`;
+
         const response = await fetch(url);
-        const data = await response.json();
+        const result = await response.json();
+
+        const data = result['chain_stats'];
+
+        const totalRecieved = inSatoshis ? data.funded_txo_sum : data.funded_txo_sum * SATOSHI_TO_BTC_MULTIPLIER;
+        const totalSent = inSatoshis ? data.spent_txo_sum : data.spent_txo_sum * SATOSHI_TO_BTC_MULTIPLIER;
 
         return {
-            totalRecieved: inSatoshis ? data.total_received : data.total_received * SATOSHI_TO_BTC_MULTIPLIER,
-            totalSent: inSatoshis ? data.total_sent : data.total_sent * SATOSHI_TO_BTC_MULTIPLIER,
-            balance: inSatoshis ? data.balance : data.balance * SATOSHI_TO_BTC_MULTIPLIER,
-            unconfirmedBalance: inSatoshis ? data.unconfirmed_balance : data.unconfirmed_balance * SATOSHI_TO_BTC_MULTIPLIER,
-            finalBalance: inSatoshis ? data.final_balance : data.final_balance * SATOSHI_TO_BTC_MULTIPLIER,
-            txCount: data.n_tx,
-            unconfirmedTxCount: data.unconfirmed_n_tx,
-            finalTxCount: data.final_n_tx,
+            totalRecieved: totalRecieved,
+            totalSent: totalSent,
+            balance: totalRecieved - totalSent,
+            txCount: data.tx_count,
         }
+
     }
 
     public async transactions(address: string, limit = 50, before: number | null = null) {
-        let url = `https://api.blockcypher.com/v1/btc/${this.network === TESTNET ? 'test3' : 'main'}/addrs/${address}/full?limit=${limit}`;
+        let url = `https://api.blockcypher.com/v1/btc/${this.network === TESTNET ? 'test4' : 'main'}/addrs/${address}/full?limit=${limit}`;
         if (before) {
             url += `&before=${before}`;
         }

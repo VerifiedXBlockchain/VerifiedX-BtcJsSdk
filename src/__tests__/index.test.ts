@@ -95,63 +95,63 @@ describe('Keypairs', () => {
 
 
 
-// describe('Account', () => {
-//   let accountService: AccountService;
+describe('Account', () => {
+  let accountService: AccountService;
 
-//   beforeAll(() => {
-//     accountService = new AccountService(true);
-//   });
+  beforeAll(() => {
+    accountService = new AccountService(true);
+  });
 
-//   test('can get address info', async () => {
+  test('can get address info', async () => {
 
-//     const address = "tb1qh0nx4epkftfz3gmztkg9qmcyez604q36snzg0n"
+    const address = "tb1qhra5rapluauvqjujcv752scfdmnf7h2afne4lr"
 
-//     const data = await accountService.addressInfo(address);
-//     expect(data).toBeTruthy();
-//     expect(data.balance).toBeTruthy();
+    const data = await accountService.addressInfo(address);
+    expect(data).toBeTruthy();
+    expect(data.balance).toBeGreaterThanOrEqual(0);
 
-//     const dataBtc = await accountService.addressInfo(address, false);
-//     expect(dataBtc).toBeTruthy();
-//     expect(dataBtc.balance).toEqual(data.balance * SATOSHI_TO_BTC_MULTIPLIER);
+    const dataBtc = await accountService.addressInfo(address, false);
+    expect(dataBtc).toBeTruthy();
+    expect(dataBtc.balance).toEqual(data.balance * SATOSHI_TO_BTC_MULTIPLIER);
 
-//     await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
-//   });
+  });
 
-//   test('can get transactions and outputs', async () => {
+  // test('can get transactions and outputs', async () => {
 
-//     const address = "tb1qh0nx4epkftfz3gmztkg9qmcyez604q36snzg0n"
+  //   const address = "tb1qh0nx4epkftfz3gmztkg9qmcyez604q36snzg0n"
 
-//     const data = await accountService.transactions(address);
-//     expect(data).toBeTruthy();
-//     expect(data.transactions.length).toBeGreaterThan(1);
+  //   const data = await accountService.transactions(address);
+  //   expect(data).toBeTruthy();
+  //   expect(data.transactions.length).toBeGreaterThan(1);
 
-//     await new Promise(resolve => setTimeout(resolve, 3000));
+  //   await new Promise(resolve => setTimeout(resolve, 3000));
 
-//   });
+  // });
 
-// test('can paginate txs', async () => {
+  // test('can paginate txs', async () => {
 
-//   const address = "tb1qh0nx4epkftfz3gmztkg9qmcyez604q36snzg0n"
+  //   const address = "tb1qh0nx4epkftfz3gmztkg9qmcyez604q36snzg0n"
 
-//   const data = await accountService.transactions(address, 2);
-//   expect(data).toBeTruthy();
-//   expect(data.transactions.length).toBeGreaterThan(1);
+  //   const data = await accountService.transactions(address, 2);
+  //   expect(data).toBeTruthy();
+  //   expect(data.transactions.length).toBeGreaterThan(1);
 
-//   const lastResult = data.transactions[data.transactions.length - 1];
-//   const dataPage2 = await accountService.transactions(address, 2, lastResult.block_height);
+  //   const lastResult = data.transactions[data.transactions.length - 1];
+  //   const dataPage2 = await accountService.transactions(address, 2, lastResult.block_height);
 
-//   await new Promise(resolve => setTimeout(resolve, 3000));
-
-
-//   expect(dataPage2).toBeTruthy();
-//   expect(dataPage2.transactions.length).toBeGreaterThan(1);
-
-//   const page2lastResult = dataPage2.transactions[dataPage2.transactions.length - 1];
-
-//   expect(page2lastResult.block_height).toBeLessThan(lastResult.block_height);
-
-// });
+  //   await new Promise(resolve => setTimeout(resolve, 3000));
 
 
-// });
+  //   expect(dataPage2).toBeTruthy();
+  //   expect(dataPage2.transactions.length).toBeGreaterThan(1);
+
+  //   const page2lastResult = dataPage2.transactions[dataPage2.transactions.length - 1];
+
+  //   expect(page2lastResult.block_height).toBeLessThan(lastResult.block_height);
+
+  // });
+
+
+});

@@ -148,7 +148,7 @@ export const createTx = async (toAddress: string, value: number, env: "mainnet" 
         }
     }
 
-    const url = env === "mainnet" ? "https://api.blockcypher.com/v1/btc/main/txs/new" : "https://api.blockcypher.com/v1/btc/test3/txs/new";
+    const url = env === "mainnet" ? "https://api.blockcypher.com/v1/btc/main/txs/new" : "https://api.blockcypher.com/v1/btc/test4/txs/new";
     const data = JSON.stringify({
         "inputs": [
             {
@@ -215,7 +215,7 @@ export const generateTxSignatures = (senderWif: string, network: bitcoin.Network
 }
 
 export const sendTx = async (tx: any, tosign: any, signatures: any, pubkeys: any, env: "mainnet" | "testnet") => {
-    const url = env === "mainnet" ? "https://api.blockcypher.com/v1/btc/main/txs/send?token=8204f6d6308846d9a26daa8c19d51a64" : "https://api.blockcypher.com/v1/btc/test3/txs/send?token=8204f6d6308846d9a26daa8c19d51a64";
+    const url = env === "mainnet" ? "https://api.blockcypher.com/v1/btc/main/txs/send?token=8204f6d6308846d9a26daa8c19d51a64" : "https://api.blockcypher.com/v1/btc/test4/txs/send?token=8204f6d6308846d9a26daa8c19d51a64";
 
 
     const data = {

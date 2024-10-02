@@ -45634,7 +45634,7 @@
     return wifToPrivateKey(child.toWIF(), network);
   };
   function hashSeed(seed) {
-    const seedBuffer = Buffer.from(seed, "hex");
+    const seedBuffer = Buffer.from(seed);
     const hashBuffer = bitcoin.crypto.sha256(seedBuffer);
     const hashHex = hashBuffer.toString("hex");
     return hashHex;
@@ -45647,7 +45647,7 @@
         message: "invalid/insufficient parameters"
       };
     }
-    const url = env === "mainnet" ? "https://api.blockcypher.com/v1/btc/main/txs/new" : "https://api.blockcypher.com/v1/btc/test3/txs/new";
+    const url = env === "mainnet" ? "https://api.blockcypher.com/v1/btc/main/txs/new" : "https://api.blockcypher.com/v1/btc/test4/txs/new";
     const data = JSON.stringify({
       "inputs": [
         {
@@ -45700,7 +45700,7 @@
     };
   };
   var sendTx = async (tx, tosign, signatures, pubkeys, env) => {
-    const url = env === "mainnet" ? "https://api.blockcypher.com/v1/btc/main/txs/send?token=8204f6d6308846d9a26daa8c19d51a64" : "https://api.blockcypher.com/v1/btc/test3/txs/send?token=8204f6d6308846d9a26daa8c19d51a64";
+    const url = env === "mainnet" ? "https://api.blockcypher.com/v1/btc/main/txs/send?token=8204f6d6308846d9a26daa8c19d51a64" : "https://api.blockcypher.com/v1/btc/test4/txs/send?token=8204f6d6308846d9a26daa8c19d51a64";
     const data = {
       tx,
       signatures,
@@ -45913,22 +45913,21 @@
       this.network = isTestnet ? TESTNET3 : MAINNET3;
     }
     async addressInfo(address, inSatoshis = true) {
-      const url = `https://api.blockcypher.com/v1/btc/${this.network === TESTNET3 ? "test3" : "main"}/addrs/${address}/balance`;
+      const url = `https://mempool.space/${this.network == TESTNET3 ? "testnet4" : ""}/api/address/${address}`;
       const response = await fetch(url);
-      const data = await response.json();
+      const result = await response.json();
+      const data = result["chain_stats"];
+      const totalRecieved = inSatoshis ? data.funded_txo_sum : data.funded_txo_sum * SATOSHI_TO_BTC_MULTIPLIER;
+      const totalSent = inSatoshis ? data.spent_txo_sum : data.spent_txo_sum * SATOSHI_TO_BTC_MULTIPLIER;
       return {
-        totalRecieved: inSatoshis ? data.total_received : data.total_received * SATOSHI_TO_BTC_MULTIPLIER,
-        totalSent: inSatoshis ? data.total_sent : data.total_sent * SATOSHI_TO_BTC_MULTIPLIER,
-        balance: inSatoshis ? data.balance : data.balance * SATOSHI_TO_BTC_MULTIPLIER,
-        unconfirmedBalance: inSatoshis ? data.unconfirmed_balance : data.unconfirmed_balance * SATOSHI_TO_BTC_MULTIPLIER,
-        finalBalance: inSatoshis ? data.final_balance : data.final_balance * SATOSHI_TO_BTC_MULTIPLIER,
-        txCount: data.n_tx,
-        unconfirmedTxCount: data.unconfirmed_n_tx,
-        finalTxCount: data.final_n_tx
+        totalRecieved,
+        totalSent,
+        balance: totalRecieved - totalSent,
+        txCount: data.tx_count
       };
     }
     async transactions(address, limit = 50, before = null) {
-      let url = `https://api.blockcypher.com/v1/btc/${this.network === TESTNET3 ? "test3" : "main"}/addrs/${address}/full?limit=${limit}`;
+      let url = `https://api.blockcypher.com/v1/btc/${this.network === TESTNET3 ? "test4" : "main"}/addrs/${address}/full?limit=${limit}`;
       if (before) {
         url += `&before=${before}`;
       }
