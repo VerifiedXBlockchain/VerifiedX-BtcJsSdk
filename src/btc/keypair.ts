@@ -99,4 +99,51 @@ export default class KeypairService {
         return this.buildOutput(keyPair);
 
     }
+
+
+    public signMessage(wif: string, message: string) {
+        const keyPair = ECPair.fromWIF(wif, this.network);
+        const messageBuffer = Buffer.from(message, 'utf8')
+
+        const messageHash = bitcoin.crypto.hash256(messageBuffer);
+        const signature = keyPair.sign(messageHash);
+
+        const derEncodedSignature = signature.toString('hex');
+        const publicKeyHex = keyPair.publicKey.toString('hex');
+
+        const fullSignature = `30440220${injectAfter64thChar(derEncodedSignature, '0220')}.${publicKeyHex}`;
+
+        return fullSignature;
+    }
+
+
+    public signMessageWithPrivateKey(privateKeyHex: string, message: string) {
+        const privateKeyBytes = Buffer.from(privateKeyHex, 'hex');
+
+        const keyPair = ECPair.fromPrivateKey(privateKeyBytes);
+
+
+        const messageBuffer = Buffer.from(message, 'utf8')
+
+        const messageHash = bitcoin.crypto.hash256(messageBuffer);
+        const signature = keyPair.sign(messageHash);
+
+        const derEncodedSignature = signature.toString('hex');
+        const publicKeyHex = keyPair.publicKey.toString('hex');
+
+        const fullSignature = `30440220${injectAfter64thChar(derEncodedSignature, '0220')}.${publicKeyHex}`;
+
+        return fullSignature;
+    }
+
+}
+
+function injectAfter64thChar(inputString: string, charToInject: string) {
+    // Check if the input string has at least 64 characters
+    if (inputString.length <= 64) {
+        return inputString + charToInject;
+    }
+
+    // Inject the character after the 64th character
+    return inputString.slice(0, 64) + charToInject + inputString.slice(64);
 }

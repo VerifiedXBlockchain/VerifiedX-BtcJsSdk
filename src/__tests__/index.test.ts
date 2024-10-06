@@ -65,6 +65,33 @@ describe('Keypairs', () => {
     expect(data.address == data2.address).toBeFalsy();
   });
 
+  test('can sign message', () => {
+    const message = "1728184267";
+    const wif = "cRWtaDxTqXiY4mh7cTo9vMmnBkJcjGZCcdgncW2FnxuPogPchn4M";
+    const expectedSig = "304402204e2284ccd24fbf44df54674a39c22ee9f4f10acc1e772c3c7eeea9b6f0e9c61e022024aa768aefb87a1c03408d31a3ce81b18ead75ee33e1c0213011f9ca3c806bf7.03dac7c36f74befdf45035315f6f733f3eeee1f9bab55303dd1db7f6914f8cc64c";
+
+    const data = keypairService.signMessage(wif, message);
+    expect(data).toBeTruthy();
+    expect(data).toEqual(expectedSig);
+
+
+
+  })
+
+
+  test('can sign message with pkey', () => {
+    const message = "1728184267";
+    const privateKey = "75638430ff3634751efca0e334e66d0cb682ab0da06446b7cfae222efa1e8cb8";
+    const expectedSig = "304402204e2284ccd24fbf44df54674a39c22ee9f4f10acc1e772c3c7eeea9b6f0e9c61e022024aa768aefb87a1c03408d31a3ce81b18ead75ee33e1c0213011f9ca3c806bf7.03dac7c36f74befdf45035315f6f733f3eeee1f9bab55303dd1db7f6914f8cc64c";
+
+    const data = keypairService.signMessageWithPrivateKey(privateKey, message);
+    expect(data).toBeTruthy();
+    expect(data).toEqual(expectedSig);
+
+
+
+  })
+
 
 });
 
