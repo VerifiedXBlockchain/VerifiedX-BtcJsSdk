@@ -1,24 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { ECPairFactory, ECPairInterface } from 'ecpair';
+
 import * as bitcoin from 'bitcoinjs-lib';
+import ecc from '@bitcoinerlab/secp256k1';
+import { BTC_TO_SATOSHI_MULTIPLIER, SATOSHI_TO_BTC_MULTIPLIER } from './constants';
+import { streamToBuffer } from './utils';
 
-import { createTx, generateTxSignatures, sendTx } from './utils';
+// import { createTx, generateTxSignatures, sendTx } from './utils';
 
 
+const ECPair = ECPairFactory(ecc);
 
 const TESTNET = bitcoin.networks.testnet;
 const MAINNET = bitcoin.networks.bitcoin;
+const FEE = 700; //TODO: make an option
 
-
-interface CreateTxData {
-    tx: any;
-    toSign: any;
-    signatures: any;
-    pubkeys: any;
-}
 
 interface CreateTxResponse {
     success: boolean;
-    result: CreateTxData | null;
+    result: string | null;
+    error: string | null;
+}
+
+interface BroadcastTxResponse {
+    success: boolean;
+    result: string | null;
     error: string | null;
 }
 
@@ -26,12 +32,17 @@ interface CreateTxResponse {
 
 export default class TransactionService {
     network: bitcoin.Network;
+    apiBaseUrl: string;
 
     constructor(isTestnet: boolean) {
         this.network = isTestnet ? TESTNET : MAINNET;
+        this.apiBaseUrl = isTestnet ? 'https://mempool.space/testnet4/api' : 'https://mempool.space/api';
     }
 
-    private _buildCreateResponse(success: boolean, result: CreateTxData | null, error: string | null = null): CreateTxResponse {
+    private _buildCreateResponse(success: boolean, result: string | null, error: string | null = null): CreateTxResponse {
+        if (!success) {
+            console.log("ERRROR: ", error);
+        }
         return {
             success,
             result,
@@ -39,37 +50,112 @@ export default class TransactionService {
         };
     }
 
-    public async createTransaction(senderWif: string, senderAddress: string, recipientAddress: string, amount: number): Promise<CreateTxResponse> {
-        const networkName = this.network === TESTNET ? 'testnet' : 'mainnet';
-        const txResponse = await createTx(recipientAddress, amount, networkName, senderAddress);
+    private _buildBroadcastResponse(success: boolean, result: string | null, error: string | null = null): BroadcastTxResponse {
+        return {
+            success,
+            result,
+            error,
+        };
+    }
 
-        if (txResponse?.code != 1) {
-            console.log(txResponse.message);
-            return this._buildCreateResponse(false, null, txResponse.message);
+    private async getUtxos(address: string) {
+        const response = await fetch(`${this.apiBaseUrl}/address/${address}/utxo`);
+        if (!response.ok) {
+            throw new Error('Error getting utxos');
         }
-        const tx = txResponse.result.tx;
-        const toSign = txResponse.result.tosign;
-        const signaturesResponse = generateTxSignatures(senderWif, this.network, toSign);
-        const signatures = signaturesResponse.signatures;
-        const pubkeys = signaturesResponse.pubkeys;
+        const data = await response.json();
+        return data;
+    }
 
-        if (!signatures || !pubkeys) {
-            console.log('invalid signatures or pubkeys')
+    // private async getRawTx(txId: string) {
+    //     const url = `${this.apiBaseUrl}/tx/${txId}/raw`;
+    //     const response = await fetch(url);
 
-            return this._buildCreateResponse(false, null, "invalid signatures or pubkeys");
+    //     if (!response.ok) {
+    //         throw new Error(`Error fetching raw transaction: ${response.statusText}`);
+    //     }
 
+    //     const arrayBuffer = await response.arrayBuffer();
+
+    //     const buffer = Buffer.from(arrayBuffer);
+
+    //     return buffer;
+    // }
+
+    public async createTransaction(senderWif: string, recipientAddress: string, amount: number): Promise<CreateTxResponse> {
+        amount = amount * BTC_TO_SATOSHI_MULTIPLIER;
+
+
+        const keyPair: ECPairInterface = ECPair.fromWIF(senderWif, this.network);
+
+        const { address } = bitcoin.payments.p2wpkh({ pubkey: keyPair.publicKey, network: this.network });
+        console.log(address);
+
+
+        if (address == null) {
+            return this._buildCreateResponse(false, null, "Could not get address");
+        }
+        const utxos = await this.getUtxos(address);
+
+        if (utxos.length === 0) {
+            return this._buildCreateResponse(false, null, "No UTXOs found for the given address.");
         }
 
-        const data = await sendTx(tx, toSign, signatures, pubkeys, this.network === TESTNET ? 'testnet' : 'mainnet');
+        const psbt = new bitcoin.Psbt({ network: this.network });
 
-        if (!data.success) {
-            console.log(data.message)
-            return this._buildCreateResponse(false, null, data.message);
+        let inputSum = 0;
+
+        utxos.forEach(async (utxo: any) => {
+
+            // const rawTx = await this.getRawTx(utxo.txid);
+            console.log(utxo)
+            psbt.addInput({
+                hash: utxo.txid,
+                index: utxo.vout,
+                sequence: 0xfffffffd,
+                witnessUtxo: {
+                    script: bitcoin.address.toOutputScript(address, this.network),
+                    value: utxo.value, // satoshis
+                },
+                // nonWitnessUtxo: rawTx,
+            });
+            inputSum += utxo.value;
+        });
+
+        psbt.addOutput({
+            address: recipientAddress,
+            value: amount,
+        });
+
+        const change = inputSum - amount - FEE;
+        if (change > 0) {
+            psbt.addOutput({
+                address: address,
+                value: change,
+            });
         }
 
-        return this._buildCreateResponse(true, data.result, null);
+        psbt.signAllInputs(keyPair);
+        psbt.finalizeAllInputs();
 
+        const transactionHex = psbt.extractTransaction().toHex();
 
+        return this._buildCreateResponse(true, transactionHex, null);
+
+    }
+
+    async broadcastTransaction(transactionHex: string) {
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/tx`, { method: 'POST', body: transactionHex, headers: { 'Content-Type': 'text/plain' }, },);
+            const hash = await response.text();
+
+            return this._buildBroadcastResponse(true, hash, null);
+
+        } catch (error) {
+
+            return this._buildBroadcastResponse(false, null, `Error: ${error}`);
+        }
 
     }
 

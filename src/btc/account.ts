@@ -13,7 +13,7 @@ export default class AccountService {
 
     public async addressInfo(address: string, inSatoshis = true) {
 
-        const url = `https://mempool.space/${this.network == TESTNET ? 'testnet4' : ''}/api/address/${address}`;
+        const url = `https://mempool.space${this.network == TESTNET ? '/testnet4' : ''}/api/address/${address}`;
 
         const response = await fetch(url);
         const result = await response.json();

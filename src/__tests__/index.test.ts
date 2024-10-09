@@ -97,28 +97,47 @@ describe('Keypairs', () => {
 
 
 
-// describe('Transactions', () => {
-//   let transactionService: TransactionService;
+describe('Transactions', () => {
+  let transactionService: TransactionService;
 
-//   beforeAll(() => {
-//     transactionService = new TransactionService(true);
-//   });
+  beforeAll(() => {
+    transactionService = new TransactionService(true);
+  });
 
-//   test('can create tx', async () => {
+  test('can create tx', async () => {
 
-//     const senderWif = "cPQ5kbnuj8YmBoCaFmsPsZENVykN1GGmF18mg6sEZsJPX2np6PRa"
-//     const senderAddress = "tb1qh0nx4epkftfz3gmztkg9qmcyez604q36snzg0n"
-//     const recipientAddress = "tb1q4lahda9feljf695q473z4m8m7xhgzv35n6226q"
-//     const amount = 0.000003
+    const senderWif = "cSfmWGVRGZhkMxAv8LSakPVX4FaC12Yp9oq6z3zyGsydh3KrArGw"
+    const recipientAddress = "tb1qr0eyx8j8w8u7n4vtvu6ywyk3smkhhexw42zrvm"
+    const amount = 0.000003
 
-//     const data = await transactionService.createTransaction(senderWif, senderAddress, recipientAddress, amount);
-//     expect(data.success).toEqual(true);
-//     const hash = data.result?.tx.hash;
-//     expect(hash).toBeTruthy();
-//   });
+    const data = await transactionService.createTransaction(senderWif, recipientAddress, amount);
+    expect(data.success).toEqual(true);
+
+    expect(data.result).toBeTruthy();
+  });
+
+  // test('can broadcast tx', async () => {
+  //   const senderWif = "cSfmWGVRGZhkMxAv8LSakPVX4FaC12Yp9oq6z3zyGsydh3KrArGw"
+  //   const senderAddress = "tb1qmsgnjlndfgpf0xppwxq62zj34fwn0a2j09xkju"
+  //   const recipientAddress = "tb1qr0eyx8j8w8u7n4vtvu6ywyk3smkhhexw42zrvm"
+  //   const amount = 0.000004
+
+  //   const createData = await transactionService.createTransaction(senderWif, senderAddress, recipientAddress, amount);
+  //   expect(createData.success).toEqual(true);
+
+  //   expect(createData.result).toBeTruthy();
+
+  //   const broadcastData = await transactionService.broadcastTransaction(createData.result!);
+  //   expect(broadcastData.success).toEqual(true)
+
+  //   expect(broadcastData.result).toBeTruthy()
+  //   console.log(broadcastData.result)
 
 
-// });
+  // })
+
+
+});
 
 
 
