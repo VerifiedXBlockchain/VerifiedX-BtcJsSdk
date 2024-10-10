@@ -45807,8 +45807,8 @@
         const feeRates = await this.getFeeRates();
         feeRate = feeRates?.economyFee || (this.network == TESTNET2 ? 2 : 5);
       }
-      if (feeRate < 150) {
-        feeRate = 150;
+      if (this.network == TESTNET2) {
+        feeRate = 5;
       }
       const fee = txSize * feeRate;
       const change = inputSum - amount - fee;
@@ -45861,17 +45861,7 @@
       };
     }
     async transactions(address2, limit = 50, before = null) {
-      let url = `https://api.blockcypher.com/v1/btc/${this.network === TESTNET3 ? "test4" : "main"}/addrs/${address2}/full?limit=${limit}`;
-      if (before) {
-        url += `&before=${before}`;
-      }
-      const response = await fetch(url);
-      const data = await response.json();
-      const transactions = data["txs"];
-      return {
-        canLoadMore: data["hasMore"],
-        transactions
-      };
+      const url = `https://mempool.space${this.network == TESTNET3 ? "/testnet4" : ""}/api/address/${address2}`;
     }
   };
 

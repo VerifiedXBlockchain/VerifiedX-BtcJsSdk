@@ -157,12 +157,11 @@ export default class TransactionService {
             feeRate = feeRates?.economyFee || (this.network == TESTNET ? 2 : 5);
         }
 
-        if (feeRate! < 150) {
-            feeRate = 150;
+        if (this.network == TESTNET) {
+            feeRate = 5;
         }
 
         const fee = txSize * feeRate!;
-
 
         const change = inputSum - amount - fee;
         if (change > 0) {

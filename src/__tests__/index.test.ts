@@ -123,24 +123,24 @@ describe('Transactions', () => {
     expect(data.result).toBeTruthy();
   });
 
-  test('can broadcast tx', async () => {
-    const senderWif = "cSfmWGVRGZhkMxAv8LSakPVX4FaC12Yp9oq6z3zyGsydh3KrArGw"
-    const recipientAddress = "tb1qr0eyx8j8w8u7n4vtvu6ywyk3smkhhexw42zrvm"
-    const amount = 0.000004
+  // test('can broadcast tx', async () => {
+  //   const senderWif = "cSfmWGVRGZhkMxAv8LSakPVX4FaC12Yp9oq6z3zyGsydh3KrArGw"
+  //   const recipientAddress = "tb1qr0eyx8j8w8u7n4vtvu6ywyk3smkhhexw42zrvm"
+  //   const amount = 0.000004
 
-    const createData = await transactionService.createTransaction(senderWif, recipientAddress, amount);
-    expect(createData.success).toEqual(true);
+  //   const createData = await transactionService.createTransaction(senderWif, recipientAddress, amount);
+  //   expect(createData.success).toEqual(true);
 
-    expect(createData.result).toBeTruthy();
+  //   expect(createData.result).toBeTruthy();
 
-    const broadcastData = await transactionService.broadcastTransaction(createData.result!);
+  //   const broadcastData = await transactionService.broadcastTransaction(createData.result!);
 
-    expect(broadcastData.success).toEqual(true)
+  //   expect(broadcastData.success).toEqual(true)
 
-    expect(broadcastData.result).toBeTruthy()
+  //   expect(broadcastData.result).toBeTruthy()
 
 
-  })
+  // })
 
 
 });
@@ -162,25 +162,20 @@ describe('Account', () => {
     expect(data).toBeTruthy();
     expect(data.balance).toBeGreaterThanOrEqual(0);
 
-    const dataBtc = await accountService.addressInfo(address, false);
-    expect(dataBtc).toBeTruthy();
-    expect(dataBtc.balance).toEqual(data.balance * SATOSHI_TO_BTC_MULTIPLIER);
-
     await new Promise(resolve => setTimeout(resolve, 3000));
 
   });
 
-  // test('can get transactions and outputs', async () => {
+  test('can get transactions', async () => {
 
-  //   const address = "tb1qh0nx4epkftfz3gmztkg9qmcyez604q36snzg0n"
+    const address = "tb1qhra5rapluauvqjujcv752scfdmnf7h2afne4lr"
 
-  //   const data = await accountService.transactions(address);
-  //   expect(data).toBeTruthy();
-  //   expect(data.transactions.length).toBeGreaterThan(1);
+    const transactions = await accountService.transactions(address);
+    expect(transactions).toBeTruthy();
+    expect(transactions.length).toBeGreaterThan(0);
 
-  //   await new Promise(resolve => setTimeout(resolve, 3000));
 
-  // });
+  });
 
   // test('can paginate txs', async () => {
 

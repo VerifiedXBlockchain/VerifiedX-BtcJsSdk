@@ -4,6 +4,23 @@ import { SATOSHI_TO_BTC_MULTIPLIER } from './constants';
 const TESTNET = bitcoin.networks.testnet;
 const MAINNET = bitcoin.networks.bitcoin;
 
+interface Transaction {
+    txid: string;
+    version: number;
+    locktime: number;
+    vin: any[];  // You can replace `any[]` with a more specific type if needed
+    vout: any[]; // You can replace `any[]` with a more specific type if needed
+    size: number;
+    weight: number;
+    fee: number;
+    status: {
+        confirmed: boolean;
+        block_height: number;
+        block_hash: string;
+        block_time: number;
+    };
+}
+
 export default class AccountService {
     network: bitcoin.Network;
 
@@ -32,23 +49,17 @@ export default class AccountService {
 
     }
 
-    public async transactions(address: string, limit = 50, before: number | null = null) {
-        const url = `https://mempool.space${this.network == TESTNET ? '/testnet4' : ''}/api/address/${address}`;
+    public async transactions(address: string, limit = 50, before: number | null = null): Promise<Transaction[]> {
+        const url = `https://mempool.space${this.network == TESTNET ? '/testnet4' : ''}/api/address/${address}/txs`;
+
+        console.log(url);
+
+        const response = await fetch(url);
+        const results = await response.json();
+        console.log(results);
+        return results;
 
 
-        // if (before) {
-        //     url += `&before=${before}`;
-        // }
-
-        // const response = await fetch(url);
-        // const data = await response.json();
-
-        // const transactions = data['txs'];
-
-        // return {
-        //     canLoadMore: data['hasMore'],
-        //     transactions: transactions,
-        // }
     }
 
 
