@@ -104,6 +104,13 @@ describe('Transactions', () => {
     transactionService = new TransactionService(true);
   });
 
+  test('can get feerates', async () => {
+
+    const feeRates = await transactionService.getFeeRates();
+    expect(feeRates).toBeTruthy();
+    expect(feeRates?.economyFee).toBeTruthy();
+  })
+
   test('can create tx', async () => {
 
     const senderWif = "cSfmWGVRGZhkMxAv8LSakPVX4FaC12Yp9oq6z3zyGsydh3KrArGw"
@@ -116,25 +123,24 @@ describe('Transactions', () => {
     expect(data.result).toBeTruthy();
   });
 
-  // test('can broadcast tx', async () => {
-  //   const senderWif = "cSfmWGVRGZhkMxAv8LSakPVX4FaC12Yp9oq6z3zyGsydh3KrArGw"
-  //   const senderAddress = "tb1qmsgnjlndfgpf0xppwxq62zj34fwn0a2j09xkju"
-  //   const recipientAddress = "tb1qr0eyx8j8w8u7n4vtvu6ywyk3smkhhexw42zrvm"
-  //   const amount = 0.000004
+  test('can broadcast tx', async () => {
+    const senderWif = "cSfmWGVRGZhkMxAv8LSakPVX4FaC12Yp9oq6z3zyGsydh3KrArGw"
+    const recipientAddress = "tb1qr0eyx8j8w8u7n4vtvu6ywyk3smkhhexw42zrvm"
+    const amount = 0.000004
 
-  //   const createData = await transactionService.createTransaction(senderWif, senderAddress, recipientAddress, amount);
-  //   expect(createData.success).toEqual(true);
+    const createData = await transactionService.createTransaction(senderWif, recipientAddress, amount);
+    expect(createData.success).toEqual(true);
 
-  //   expect(createData.result).toBeTruthy();
+    expect(createData.result).toBeTruthy();
 
-  //   const broadcastData = await transactionService.broadcastTransaction(createData.result!);
-  //   expect(broadcastData.success).toEqual(true)
+    const broadcastData = await transactionService.broadcastTransaction(createData.result!);
 
-  //   expect(broadcastData.result).toBeTruthy()
-  //   console.log(broadcastData.result)
+    expect(broadcastData.success).toEqual(true)
+
+    expect(broadcastData.result).toBeTruthy()
 
 
-  // })
+  })
 
 
 });

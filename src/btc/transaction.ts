@@ -3,18 +3,16 @@ import { ECPairFactory, ECPairInterface } from 'ecpair';
 
 import * as bitcoin from 'bitcoinjs-lib';
 import ecc from '@bitcoinerlab/secp256k1';
-import { BTC_TO_SATOSHI_MULTIPLIER, SATOSHI_TO_BTC_MULTIPLIER } from './constants';
-import { streamToBuffer } from './utils';
+import { BTC_TO_SATOSHI_MULTIPLIER } from './constants';
 
-// import { createTx, generateTxSignatures, sendTx } from './utils';
 
 
 const ECPair = ECPairFactory(ecc);
 
 const TESTNET = bitcoin.networks.testnet;
 const MAINNET = bitcoin.networks.bitcoin;
-const FEE = 700; //TODO: make an option
-
+const P2WPKH_INPUT_SIZE = 68;
+const P2WPKH_OUTPUT_SIZE = 31;
 
 interface CreateTxResponse {
     success: boolean;
@@ -28,6 +26,13 @@ interface BroadcastTxResponse {
     error: string | null;
 }
 
+interface FeeRates {
+    fastestFee: number;
+    halfHourFee: number;
+    hourFee: number;
+    economyFee: number;
+    minimumFee: number;
+}
 
 
 export default class TransactionService {
@@ -58,6 +63,21 @@ export default class TransactionService {
         };
     }
 
+    public async getFeeRates(): Promise<FeeRates | null> {
+        try {
+
+            const response = await fetch(`${this.apiBaseUrl}/v1/fees/recommended`);
+            if (!response.ok) {
+                return null;
+            }
+            const feeRates = await response.json();
+            return feeRates;
+        } catch (e) {
+            return null;
+        }
+    }
+
+
     private async getUtxos(address: string) {
         const response = await fetch(`${this.apiBaseUrl}/address/${address}/utxo`);
         if (!response.ok) {
@@ -67,29 +87,28 @@ export default class TransactionService {
         return data;
     }
 
-    // private async getRawTx(txId: string) {
-    //     const url = `${this.apiBaseUrl}/tx/${txId}/raw`;
-    //     const response = await fetch(url);
+    public async getRawTx(txId: string) {
+        const url = `${this.apiBaseUrl}/tx/${txId}/raw`;
+        const response = await fetch(url);
 
-    //     if (!response.ok) {
-    //         throw new Error(`Error fetching raw transaction: ${response.statusText}`);
-    //     }
+        if (!response.ok) {
+            throw new Error(`Error fetching raw transaction: ${response.statusText}`);
+        }
 
-    //     const arrayBuffer = await response.arrayBuffer();
+        const arrayBuffer = await response.arrayBuffer();
 
-    //     const buffer = Buffer.from(arrayBuffer);
+        const buffer = Buffer.from(arrayBuffer);
 
-    //     return buffer;
-    // }
+        return buffer;
+    }
 
-    public async createTransaction(senderWif: string, recipientAddress: string, amount: number): Promise<CreateTxResponse> {
+    public async createTransaction(senderWif: string, recipientAddress: string, amount: number, feeRate: number = 0): Promise<CreateTxResponse> {
         amount = amount * BTC_TO_SATOSHI_MULTIPLIER;
 
 
         const keyPair: ECPairInterface = ECPair.fromWIF(senderWif, this.network);
 
         const { address } = bitcoin.payments.p2wpkh({ pubkey: keyPair.publicKey, network: this.network });
-        console.log(address);
 
 
         if (address == null) {
@@ -104,11 +123,11 @@ export default class TransactionService {
         const psbt = new bitcoin.Psbt({ network: this.network });
 
         let inputSum = 0;
+        let inputSize = 0;
+        let outputSize = 0;
 
         utxos.forEach(async (utxo: any) => {
 
-            // const rawTx = await this.getRawTx(utxo.txid);
-            console.log(utxo)
             psbt.addInput({
                 hash: utxo.txid,
                 index: utxo.vout,
@@ -117,9 +136,9 @@ export default class TransactionService {
                     script: bitcoin.address.toOutputScript(address, this.network),
                     value: utxo.value, // satoshis
                 },
-                // nonWitnessUtxo: rawTx,
             });
             inputSum += utxo.value;
+            inputSize += P2WPKH_INPUT_SIZE;
         });
 
         psbt.addOutput({
@@ -127,7 +146,25 @@ export default class TransactionService {
             value: amount,
         });
 
-        const change = inputSum - amount - FEE;
+        outputSize += P2WPKH_OUTPUT_SIZE;
+
+        // for change output
+        outputSize += P2WPKH_OUTPUT_SIZE;
+        const txSize = inputSize + outputSize + 10;
+
+        if (!feeRate) {
+            const feeRates = await this.getFeeRates();
+            feeRate = feeRates?.economyFee || (this.network == TESTNET ? 2 : 5);
+        }
+
+        if (feeRate! < 150) {
+            feeRate = 150;
+        }
+
+        const fee = txSize * feeRate!;
+
+
+        const change = inputSum - amount - fee;
         if (change > 0) {
             psbt.addOutput({
                 address: address,
@@ -148,99 +185,16 @@ export default class TransactionService {
 
         try {
             const response = await fetch(`${this.apiBaseUrl}/tx`, { method: 'POST', body: transactionHex, headers: { 'Content-Type': 'text/plain' }, },);
+            if (!response.ok) {
+                const error = await response.text();
+                return this._buildBroadcastResponse(false, null, `Error: ${error}`);
+            }
             const hash = await response.text();
 
             return this._buildBroadcastResponse(true, hash, null);
 
         } catch (error) {
-
             return this._buildBroadcastResponse(false, null, `Error: ${error}`);
         }
-
     }
-
-    // public async sendTransaction(tx: any, toSign: any, signatures: any, pubkeys: any): Promise<SendTxResponse> {
-    //     const result = await sendTx(tx, toSign, signatures, pubkeys, this.network === TESTNET ? 'testnet' : 'mainnet');
-    //     console.log(result)
-    //     console.log('------------------')
-    //     if (!result.success) {
-    //         return {
-    //             success: false,
-    //             result: null,
-    //             error: result.message ?? 'unkwnown error'
-    //         }
-    //     }
-
-    //     return {
-    //         success: true,
-    //         result: result,
-    //         error: null
-    //     }
-    // }
-
-
-    // public async sendTransaction2(senderWif: string, recipientAddress: string, amount: number) {
-    //     const sender = ECPair.fromWIF(
-    //         senderWif,
-    //         this.network
-    //     );
-
-    //     const payment1 = createPayment('p2pkh', [sender], this.network);
-    //     const payment2 = createPayment('p2pkh', [sender], this.network);
-
-    //     console.log({ payment1 })
-    //     console.log({ payment2 })
-
-    //     const inputData1 = await getInputData(
-    //         2e5,
-    //         payment1.payment,
-    //         true,
-    //         'noredeem',
-    //     );
-    //     const inputData2 = await getInputData(
-    //         7e4,
-    //         payment2.payment,
-    //         true,
-    //         'noredeem',
-    //     );
-
-    //     const { hash, index, nonWitnessUtxo } = inputData1;
-
-    //     console.log({ hash, index, nonWitnessUtxo });
-
-    //     const psbt = new bitcoin.Psbt({ network: this.network })
-    //         .addInput(inputData1)
-    //         .addInput(inputData2)
-    //         .addOutput({
-    //             address: recipientAddress,
-    //             value: 8e4,
-    //         }).addOutput({
-    //             address: payment2.payment.address, // OR script, which is a Buffer.
-    //             value: 1e4,
-    //         });
-
-    //     const psbtBaseText = psbt.toBase64();
-    //     const signer1 = bitcoin.Psbt.fromBase64(psbtBaseText);
-    //     const signer2 = bitcoin.Psbt.fromBase64(psbtBaseText);
-    //     signer1.signAllInputs(payment1.keys[0]);
-    //     signer2.signAllInputs(payment2.keys[0]);
-
-    //     const s1text = signer1.toBase64();
-    //     const s2text = signer2.toBase64();
-
-    //     const final1 = bitcoin.Psbt.fromBase64(s1text);
-    //     const final2 = bitcoin.Psbt.fromBase64(s2text);
-
-    //     psbt.combine(final1, final2);
-
-    //     psbt.finalizeAllInputs();
-
-    //     const tx = psbt.extractTransaction().toHex();
-    //     console.log('----------');
-    //     console.log(tx);
-    //     console.log('----------');
-
-    //     return tx;
-
-    // }
 }

@@ -33,20 +33,22 @@ export default class AccountService {
     }
 
     public async transactions(address: string, limit = 50, before: number | null = null) {
-        let url = `https://api.blockcypher.com/v1/btc/${this.network === TESTNET ? 'test4' : 'main'}/addrs/${address}/full?limit=${limit}`;
-        if (before) {
-            url += `&before=${before}`;
-        }
+        const url = `https://mempool.space${this.network == TESTNET ? '/testnet4' : ''}/api/address/${address}`;
 
-        const response = await fetch(url);
-        const data = await response.json();
 
-        const transactions = data['txs'];
+        // if (before) {
+        //     url += `&before=${before}`;
+        // }
 
-        return {
-            canLoadMore: data['hasMore'],
-            transactions: transactions,
-        }
+        // const response = await fetch(url);
+        // const data = await response.json();
+
+        // const transactions = data['txs'];
+
+        // return {
+        //     canLoadMore: data['hasMore'],
+        //     transactions: transactions,
+        // }
     }
 
 

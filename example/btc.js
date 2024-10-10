@@ -10120,14 +10120,38 @@
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.testnet = exports.regtest = exports.bitcoin = void 0;
       exports.bitcoin = {
+        /**
+         * The message prefix used for signing Bitcoin messages.
+         */
         messagePrefix: "Bitcoin Signed Message:\n",
+        /**
+         * The Bech32 prefix used for Bitcoin addresses.
+         */
         bech32: "bc",
+        /**
+         * The BIP32 key prefixes for Bitcoin.
+         */
         bip32: {
+          /**
+           * The public key prefix for BIP32 extended public keys.
+           */
           public: 76067358,
+          /**
+           * The private key prefix for BIP32 extended private keys.
+           */
           private: 76066276
         },
+        /**
+         * The prefix for Bitcoin public key hashes.
+         */
         pubKeyHash: 0,
+        /**
+         * The prefix for Bitcoin script hashes.
+         */
         scriptHash: 5,
+        /**
+         * The prefix for Bitcoin Wallet Import Format (WIF) private keys.
+         */
         wif: 128
       };
       exports.regtest = {
@@ -10530,7 +10554,7 @@
     "node_modules/bitcoinjs-lib/src/types.js"(exports) {
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
-      exports.oneOf = exports.Null = exports.BufferN = exports.Function = exports.UInt32 = exports.UInt8 = exports.tuple = exports.maybe = exports.Hex = exports.Buffer = exports.String = exports.Boolean = exports.Array = exports.Number = exports.Hash256bit = exports.Hash160bit = exports.Buffer256bit = exports.isTaptree = exports.isTapleaf = exports.TAPLEAF_VERSION_MASK = exports.Network = exports.ECPoint = exports.Satoshi = exports.Signer = exports.BIP32Path = exports.UInt31 = exports.isPoint = exports.typeforce = void 0;
+      exports.oneOf = exports.Null = exports.BufferN = exports.Function = exports.UInt32 = exports.UInt8 = exports.tuple = exports.maybe = exports.Hex = exports.Buffer = exports.String = exports.Boolean = exports.Array = exports.Number = exports.Hash256bit = exports.Hash160bit = exports.Buffer256bit = exports.isTaptree = exports.isTapleaf = exports.TAPLEAF_VERSION_MASK = exports.Satoshi = exports.isPoint = exports.stacksEqual = exports.typeforce = void 0;
       var buffer_1 = require_buffer();
       exports.typeforce = require_typeforce();
       var ZERO32 = buffer_1.Buffer.alloc(32, 0);
@@ -10538,6 +10562,14 @@
         "fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
         "hex"
       );
+      function stacksEqual(a, b) {
+        if (a.length !== b.length)
+          return false;
+        return a.every((x, i) => {
+          return x.equals(b[i]);
+        });
+      }
+      exports.stacksEqual = stacksEqual;
       function isPoint(p) {
         if (!buffer_1.Buffer.isBuffer(p))
           return false;
@@ -10562,41 +10594,11 @@
         return false;
       }
       exports.isPoint = isPoint;
-      var UINT31_MAX = Math.pow(2, 31) - 1;
-      function UInt31(value) {
-        return exports.typeforce.UInt32(value) && value <= UINT31_MAX;
-      }
-      exports.UInt31 = UInt31;
-      function BIP32Path(value) {
-        return exports.typeforce.String(value) && !!value.match(/^(m\/)?(\d+'?\/)*\d+'?$/);
-      }
-      exports.BIP32Path = BIP32Path;
-      BIP32Path.toJSON = () => {
-        return "BIP32 derivation path";
-      };
-      function Signer(obj) {
-        return (exports.typeforce.Buffer(obj.publicKey) || typeof obj.getPublicKey === "function") && typeof obj.sign === "function";
-      }
-      exports.Signer = Signer;
       var SATOSHI_MAX = 21 * 1e14;
       function Satoshi(value) {
         return exports.typeforce.UInt53(value) && value <= SATOSHI_MAX;
       }
       exports.Satoshi = Satoshi;
-      exports.ECPoint = exports.typeforce.quacksLike("Point");
-      exports.Network = exports.typeforce.compile({
-        messagePrefix: exports.typeforce.oneOf(
-          exports.typeforce.Buffer,
-          exports.typeforce.String
-        ),
-        bip32: {
-          public: exports.typeforce.UInt32,
-          private: exports.typeforce.UInt32
-        },
-        pubKeyHash: exports.typeforce.UInt8,
-        scriptHash: exports.typeforce.UInt8,
-        wif: exports.typeforce.UInt8
-      });
       exports.TAPLEAF_VERSION_MASK = 254;
       function isTapleaf(o) {
         if (!o || !("output" in o))
@@ -10643,6 +10645,7 @@
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.encode = exports.decode = void 0;
       var bip66 = require_bip66();
+      var script_1 = require_script();
       var types = require_types2();
       var { typeforce } = types;
       var ZERO = Buffer.alloc(1, 0);
@@ -10667,9 +10670,9 @@
       }
       function decode(buffer) {
         const hashType = buffer.readUInt8(buffer.length - 1);
-        const hashTypeMod = hashType & ~128;
-        if (hashTypeMod <= 0 || hashTypeMod >= 4)
+        if (!(0, script_1.isDefinedHashType)(hashType)) {
           throw new Error("Invalid hashType " + hashType);
+        }
         const decoded = bip66.decode(buffer.slice(0, -1));
         const r = fromDER(decoded.r);
         const s = fromDER(decoded.s);
@@ -10685,9 +10688,9 @@
           },
           { signature, hashType }
         );
-        const hashTypeMod = hashType & ~128;
-        if (hashTypeMod <= 0 || hashTypeMod >= 4)
+        if (!(0, script_1.isDefinedHashType)(hashType)) {
           throw new Error("Invalid hashType " + hashType);
+        }
         const hashTypeBuffer = Buffer.allocUnsafe(1);
         hashTypeBuffer.writeUInt8(hashType, 0);
         const r = toDER(signature.slice(0, 32));
@@ -10822,6 +10825,9 @@
         if (chunksIsBuffer(chunks)) {
           chunks = decompile(chunks);
         }
+        if (!chunks) {
+          throw new Error("Could not convert invalid chunks to ASM");
+        }
         return chunks.map((chunk) => {
           if (singleChunkIsBuffer(chunk)) {
             const op = asMinimalOP(chunk);
@@ -10929,13 +10935,6 @@
       var types_1 = require_types2();
       var lazy = require_lazy();
       var OPS = bscript.OPS;
-      function stacksEqual(a, b) {
-        if (a.length !== b.length)
-          return false;
-        return a.every((x, i) => {
-          return x.equals(b[i]);
-        });
-      }
       function p2data(a, opts) {
         if (!a.data && !a.output)
           throw new TypeError("Not enough data");
@@ -10969,7 +10968,7 @@
               throw new TypeError("Output is invalid");
             if (!chunks.slice(1).every(types_1.typeforce.Buffer))
               throw new TypeError("Output is invalid");
-            if (a.data && !stacksEqual(a.data, o.data))
+            if (a.data && !(0, types_1.stacksEqual)(a.data, o.data))
               throw new TypeError("Data mismatch");
           }
         }
@@ -10991,13 +10990,6 @@
       var lazy = require_lazy();
       var OPS = bscript.OPS;
       var OP_INT_BASE = OPS.OP_RESERVED;
-      function stacksEqual(a, b) {
-        if (a.length !== b.length)
-          return false;
-        return a.every((x, i) => {
-          return x.equals(b[i]);
-        });
-      }
       function p2ms(a, opts) {
         if (!a.input && !a.output && !(a.pubkeys && a.m !== void 0) && !a.signatures)
           throw new TypeError("Not enough data");
@@ -11104,7 +11096,7 @@
               throw new TypeError("m mismatch");
             if (a.n !== void 0 && a.n !== o.n)
               throw new TypeError("n mismatch");
-            if (a.pubkeys && !stacksEqual(a.pubkeys, o.pubkeys))
+            if (a.pubkeys && !(0, types_1.stacksEqual)(a.pubkeys, o.pubkeys))
               throw new TypeError("Pubkeys mismatch");
           }
           if (a.pubkeys) {
@@ -11125,7 +11117,7 @@
               throw new TypeError("Input is invalid");
             if (o.signatures.length === 0 || !o.signatures.every(isAcceptableSignature))
               throw new TypeError("Input has invalid signature(s)");
-            if (a.signatures && !stacksEqual(a.signatures, o.signatures))
+            if (a.signatures && !(0, types_1.stacksEqual)(a.signatures, o.signatures))
               throw new TypeError("Signature mismatch");
             if (a.m !== void 0 && a.m !== a.signatures.length)
               throw new TypeError("Signature count mismatch");
@@ -12413,13 +12405,6 @@
       var lazy = require_lazy();
       var bs58check = require_bs58check2();
       var OPS = bscript.OPS;
-      function stacksEqual(a, b) {
-        if (a.length !== b.length)
-          return false;
-        return a.every((x, i) => {
-          return x.equals(b[i]);
-        });
-      }
       function p2sh(a, opts) {
         if (!a.address && !a.hash && !a.output && !a.redeem && !a.input)
           throw new TypeError("Not enough data");
@@ -12592,7 +12577,7 @@
             checkRedeem(a.redeem);
           }
           if (a.witness) {
-            if (a.redeem && a.redeem.witness && !stacksEqual(a.redeem.witness, a.witness))
+            if (a.redeem && a.redeem.witness && !(0, types_1.stacksEqual)(a.redeem.witness, a.witness))
               throw new TypeError("Witness and redeem.witness mismatch");
           }
         }
@@ -12927,13 +12912,6 @@
       var bech32_1 = require_dist2();
       var OPS = bscript.OPS;
       var EMPTY_BUFFER = Buffer.alloc(0);
-      function stacksEqual(a, b) {
-        if (a.length !== b.length)
-          return false;
-        return a.every((x, i) => {
-          return x.equals(b[i]);
-        });
-      }
       function chunkHasUncompressedPubkey(chunk) {
         if (Buffer.isBuffer(chunk) && chunk.length === 65 && chunk[0] === 4 && (0, types_1.isPoint)(chunk)) {
           return true;
@@ -13090,7 +13068,7 @@
             }
             if (a.redeem.input && !bscript.isPushOnly(_rchunks()))
               throw new TypeError("Non push-only scriptSig");
-            if (a.witness && a.redeem.witness && !stacksEqual(a.witness, a.redeem.witness))
+            if (a.witness && a.redeem.witness && !(0, types_1.stacksEqual)(a.witness, a.redeem.witness))
               throw new TypeError("Witness and redeem.witness mismatch");
             if (a.redeem.input && _rchunks().some(chunkHasUncompressedPubkey) || a.redeem.output && (bscript.decompile(a.redeem.output) || []).some(
               chunkHasUncompressedPubkey
@@ -13555,6 +13533,7 @@
       var bip341_1 = require_bip341();
       var lazy = require_lazy();
       var bech32_1 = require_dist2();
+      var address_1 = require_address();
       var OPS = bscript.OPS;
       var TAPROOT_WITNESS_VERSION = 1;
       var ANNEX_PREFIX = 80;
@@ -13593,14 +13572,7 @@
           a
         );
         const _address = lazy.value(() => {
-          const result = bech32_1.bech32m.decode(a.address);
-          const version = result.words.shift();
-          const data = bech32_1.bech32m.fromWords(result.words);
-          return {
-            version,
-            prefix: result.prefix,
-            data: buffer_1.Buffer.from(data)
-          };
+          return (0, address_1.fromBech32)(a.address);
         });
         const _witness = lazy.value(() => {
           if (!a.witness || !a.witness.length)
@@ -13782,7 +13754,7 @@
                 throw new TypeError("Redeem.output and witness mismatch");
             }
             if (a.redeem.witness) {
-              if (o.redeem.witness && !stacksEqual(a.redeem.witness, o.redeem.witness))
+              if (o.redeem.witness && !(0, types_1.stacksEqual)(a.redeem.witness, o.redeem.witness))
                 throw new TypeError("Redeem.witness and witness mismatch");
             }
           }
@@ -13830,13 +13802,6 @@
         return Object.assign(o, a);
       }
       exports.p2tr = p2tr;
-      function stacksEqual(a, b) {
-        if (a.length !== b.length)
-          return false;
-        return a.every((x, i) => {
-          return x.equals(b[i]);
-        });
-      }
     }
   });
 
@@ -13935,33 +13900,33 @@
         console.warn(FUTURE_SEGWIT_VERSION_WARNING);
         return toBech32(data, version, network.bech32);
       }
-      function fromBase58Check(address) {
-        const payload = Buffer.from(bs58check.decode(address));
+      function fromBase58Check(address2) {
+        const payload = Buffer.from(bs58check.decode(address2));
         if (payload.length < 21)
-          throw new TypeError(address + " is too short");
+          throw new TypeError(address2 + " is too short");
         if (payload.length > 21)
-          throw new TypeError(address + " is too long");
+          throw new TypeError(address2 + " is too long");
         const version = payload.readUInt8(0);
         const hash = payload.slice(1);
         return { version, hash };
       }
       exports.fromBase58Check = fromBase58Check;
-      function fromBech32(address) {
+      function fromBech32(address2) {
         let result;
         let version;
         try {
-          result = bech32_1.bech32.decode(address);
+          result = bech32_1.bech32.decode(address2);
         } catch (e) {
         }
         if (result) {
           version = result.words[0];
           if (version !== 0)
-            throw new TypeError(address + " uses wrong encoding");
+            throw new TypeError(address2 + " uses wrong encoding");
         } else {
-          result = bech32_1.bech32m.decode(address);
+          result = bech32_1.bech32m.decode(address2);
           version = result.words[0];
           if (version === 0)
-            throw new TypeError(address + " uses wrong encoding");
+            throw new TypeError(address2 + " uses wrong encoding");
         }
         const data = bech32_1.bech32.fromWords(result.words.slice(1));
         return {
@@ -14017,12 +13982,12 @@
         throw new Error(bscript.toASM(output) + " has no matching Address");
       }
       exports.fromOutputScript = fromOutputScript;
-      function toOutputScript(address, network) {
+      function toOutputScript(address2, network) {
         network = network || networks4.bitcoin;
         let decodeBase58;
         let decodeBech32;
         try {
-          decodeBase58 = fromBase58Check(address);
+          decodeBase58 = fromBase58Check(address2);
         } catch (e) {
         }
         if (decodeBase58) {
@@ -14032,12 +13997,12 @@
             return payments3.p2sh({ hash: decodeBase58.hash }).output;
         } else {
           try {
-            decodeBech32 = fromBech32(address);
+            decodeBech32 = fromBech32(address2);
           } catch (e) {
           }
           if (decodeBech32) {
             if (decodeBech32.prefix !== network.bech32)
-              throw new Error(address + " has an invalid prefix");
+              throw new Error(address2 + " has an invalid prefix");
             if (decodeBech32.version === 0) {
               if (decodeBech32.data.length === 20)
                 return payments3.p2wpkh({ hash: decodeBech32.data }).output;
@@ -14055,7 +14020,7 @@
             }
           }
         }
-        throw new Error(address + " has no matching Script");
+        throw new Error(address2 + " has no matching Script");
       }
       exports.toOutputScript = toOutputScript;
     }
@@ -16679,7 +16644,7 @@
       var parser_1 = require_parser();
       var typeFields_1 = require_typeFields();
       var utils_1 = require_utils2();
-      var Psbt = class {
+      var Psbt2 = class {
         constructor(tx) {
           this.inputs = [];
           this.outputs = [];
@@ -16818,7 +16783,7 @@
           return this.globalMap.unsignedTx.toBuffer();
         }
       };
-      exports.Psbt = Psbt;
+      exports.Psbt = Psbt2;
     }
   });
 
@@ -17253,7 +17218,7 @@
         maximumFeeRate: 5e3
         // satoshi per byte
       };
-      var Psbt = class _Psbt {
+      var Psbt2 = class _Psbt {
         static fromBase64(data, opts = {}) {
           const buffer = Buffer.from(data, "base64");
           return this.fromBuffer(buffer, opts);
@@ -17276,7 +17241,7 @@
             __NON_WITNESS_UTXO_BUF_CACHE: [],
             __TX_IN_CACHE: {},
             __TX: this.data.globalMap.unsignedTx.tx,
-            // Psbt's predecesor (TransactionBuilder - now removed) behavior
+            // Psbt's predecessor (TransactionBuilder - now removed) behavior
             // was to not confirm input values  before signing.
             // Even though we highly encourage people to get
             // the full parent transaction to verify values, the ability to
@@ -17319,9 +17284,9 @@
         }
         get txOutputs() {
           return this.__CACHE.__TX.outs.map((output) => {
-            let address;
+            let address2;
             try {
-              address = (0, address_1.fromOutputScript)(
+              address2 = (0, address_1.fromOutputScript)(
                 output.script,
                 this.opts.network
               );
@@ -17330,7 +17295,7 @@
             return {
               script: (0, bufferutils_1.cloneBuffer)(output.script),
               value: output.value,
-              address
+              address: address2
             };
           });
         }
@@ -17413,11 +17378,11 @@
             );
           }
           checkInputsForPartialSig(this.data.inputs, "addOutput");
-          const { address } = outputData;
-          if (typeof address === "string") {
+          const { address: address2 } = outputData;
+          if (typeof address2 === "string") {
             const { network } = this.opts;
-            const script = (0, address_1.toOutputScript)(address, network);
-            outputData = Object.assign(outputData, { script });
+            const script = (0, address_1.toOutputScript)(address2, network);
+            outputData = Object.assign({}, outputData, { script });
           }
           (0, bip371_1.checkTaprootOutputFields)(outputData, outputData, "addOutput");
           const c = this.__CACHE;
@@ -18027,7 +17992,7 @@
           return this;
         }
       };
-      exports.Psbt = Psbt;
+      exports.Psbt = Psbt2;
       var transactionFromBuffer = (buffer) => new PsbtTransaction(buffer);
       var PsbtTransaction = class {
         constructor(buffer = Buffer.from([2, 0, 0, 0, 0, 0, 0, 0, 0, 0])) {
@@ -18320,7 +18285,7 @@
             );
           if (!forValidate && cache.__UNSAFE_SIGN_NONSEGWIT !== false)
             console.warn(
-              "Warning: Signing non-segwit inputs without the full parent transaction means there is a chance that a miner could feed you incorrect information to trick you into paying large fees. This behavior is the same as Psbt's predecesor (TransactionBuilder - now removed) when signing non-segwit scripts. You are not able to export this Psbt with toBuffer|toBase64|toHex since it is not BIP174 compliant.\n*********************\nPROCEED WITH CAUTION!\n*********************"
+              "Warning: Signing non-segwit inputs without the full parent transaction means there is a chance that a miner could feed you incorrect information to trick you into paying large fees. This behavior is the same as Psbt's predecessor (TransactionBuilder - now removed) when signing non-segwit scripts. You are not able to export this Psbt with toBuffer|toBase64|toHex since it is not BIP174 compliant.\n*********************\nPROCEED WITH CAUTION!\n*********************"
             );
           hash = unsignedTx.hashForSignature(
             inputIndex,
@@ -18393,7 +18358,7 @@
             inputIndex,
             signingScripts,
             values,
-            transaction_1.Transaction.SIGHASH_DEFAULT,
+            sighashType,
             tapLeaf.hash
           );
           return {
@@ -18755,8 +18720,8 @@
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.initEccLib = exports.Transaction = exports.opcodes = exports.Psbt = exports.Block = exports.script = exports.payments = exports.networks = exports.crypto = exports.address = void 0;
-      var address = require_address();
-      exports.address = address;
+      var address2 = require_address();
+      exports.address = address2;
       var crypto3 = require_crypto3();
       exports.crypto = crypto3;
       var networks4 = require_networks2();
@@ -45506,13 +45471,13 @@
             url: `${this._APIURL}/t/${txId}/json`
           });
         }
-        async unspents(address) {
+        async unspents(address2) {
           return this.dhttp({
             method: "GET",
-            url: `${this._APIURL}/a/${address}/unspents`
+            url: `${this._APIURL}/a/${address2}/unspents`
           });
         }
-        async faucet(address, value) {
+        async faucet(address2, value) {
           const requester = _faucetRequestMaker(
             "faucet",
             "address",
@@ -45521,7 +45486,7 @@
             this._APIPASS
           );
           const faucet = _faucetMaker(this, requester);
-          return faucet(address, value);
+          return faucet(address2, value);
         }
         async faucetComplex(output, value) {
           const outputString = output.toString("hex");
@@ -45549,27 +45514,27 @@
       };
       exports.RegtestUtils = RegtestUtils2;
       function _faucetRequestMaker(name, paramName, dhttp, url, pass) {
-        return async (address, value) => dhttp({
+        return async (address2, value) => dhttp({
           method: "POST",
-          url: `${url}/r/${name}?${paramName}=${address}&value=${value}&key=${pass}`
+          url: `${url}/r/${name}?${paramName}=${address2}&value=${value}&key=${pass}`
         });
       }
       function _faucetMaker(self2, _requester) {
-        return async (address, value) => {
+        return async (address2, value) => {
           let count = 0;
           let _unspents = [];
           const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
           const randInt = (min, max) => min + Math.floor((max - min + 1) * Math.random());
-          const txId = await _requester(address, value).then(
+          const txId = await _requester(address2, value).then(
             (v) => v,
             // Pass success value as is
             async (err) => {
               const currentHeight = await self2.height();
               if (err.message === "Bad Request" && currentHeight < 432) {
                 await self2.mine(432 - currentHeight);
-                return _requester(address, value);
+                return _requester(address2, value);
               } else if (err.message === "Bad Request" && currentHeight >= 432) {
-                return _requester(address, value);
+                return _requester(address2, value);
               } else {
                 throw err;
               }
@@ -45580,7 +45545,7 @@
               if (count >= 5) {
                 console.log("WARNING: Indexd is busy. Using getrawtransaction RPC.");
                 const tx = await self2.fetch(txId);
-                const outs = tx.outs.filter((x) => x.address === address);
+                const outs = tx.outs.filter((x) => x.address === address2);
                 const out = outs.pop();
                 if (out) {
                   const vout = tx.outs.indexOf(out);
@@ -45594,7 +45559,7 @@
               await sleep(randInt(150, 250));
             }
             await sleep(randInt(50, 150));
-            const results = await self2.unspents(address);
+            const results = await self2.unspents(address2);
             _unspents = results.filter((x) => x.txId === txId);
             count++;
           }
@@ -45650,10 +45615,10 @@
       this.network = isTestnet ? TESTNET : MAINNET;
     }
     buildOutput(keyPair, mnemonic = null) {
-      const address = publicKeyToAddress(keyPair.publicKey, this.network);
+      const address2 = publicKeyToAddress(keyPair.publicKey, this.network);
       const privateKey = keyPair.privateKey?.toString("hex");
       return {
-        address,
+        address: address2,
         wif: keyPair.toWIF(),
         privateKey,
         publicKey: keyPair.publicKey.toString("hex"),
@@ -45739,119 +45704,150 @@
   var import_ecpair3 = __toESM(require_src2());
   var bitcoin3 = __toESM(require_src4());
   var import_secp256k13 = __toESM(require_dist());
+
+  // src/btc/constants.ts
+  var BTC_TO_SATOSHI_MULTIPLIER = 1e8;
+  var SATOSHI_TO_BTC_MULTIPLIER = 1e-8;
+
+  // src/btc/transaction.ts
   var ECPair3 = (0, import_ecpair3.ECPairFactory)(import_secp256k13.default);
   var TESTNET2 = bitcoin3.networks.testnet;
   var MAINNET2 = bitcoin3.networks.bitcoin;
+  var P2WPKH_INPUT_SIZE = 68;
+  var P2WPKH_OUTPUT_SIZE = 31;
   var TransactionService = class {
     constructor(isTestnet) {
       this.network = isTestnet ? TESTNET2 : MAINNET2;
+      this.apiBaseUrl = isTestnet ? "https://mempool.space/testnet4/api" : "https://mempool.space/api";
     }
     _buildCreateResponse(success, result, error = null) {
+      if (!success) {
+        console.log("ERRROR: ", error);
+      }
       return {
         success,
         result,
         error
       };
     }
-    async getUtxos(address) {
-      const response = await fetch(`https://mempool.space/api/address/${address}/utxo`);
+    _buildBroadcastResponse(success, result, error = null) {
+      return {
+        success,
+        result,
+        error
+      };
+    }
+    async getFeeRates() {
+      try {
+        const response = await fetch(`${this.apiBaseUrl}/v1/fees/recommended`);
+        if (!response.ok) {
+          return null;
+        }
+        const feeRates = await response.json();
+        return feeRates;
+      } catch (e) {
+        return null;
+      }
+    }
+    async getUtxos(address2) {
+      const response = await fetch(`${this.apiBaseUrl}/address/${address2}/utxo`);
+      if (!response.ok) {
+        throw new Error("Error getting utxos");
+      }
       const data = await response.json();
       return data;
     }
-    async createTransaction(senderWif, senderAddress, recipientAddress, amount) {
-      const networkName = this.network === TESTNET2 ? "testnet4" : "mainnet";
+    async getRawTx(txId) {
+      const url = `${this.apiBaseUrl}/tx/${txId}/raw`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Error fetching raw transaction: ${response.statusText}`);
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      return buffer;
+    }
+    async createTransaction(senderWif, recipientAddress, amount, feeRate = 0) {
+      amount = amount * BTC_TO_SATOSHI_MULTIPLIER;
       const keyPair = ECPair3.fromWIF(senderWif, this.network);
-      const { address } = bitcoin3.payments.p2pkh({ pubkey: keyPair.publicKey, network: this.network });
-      const utxos = await this.getUtxos(senderAddress);
+      const { address: address2 } = bitcoin3.payments.p2wpkh({ pubkey: keyPair.publicKey, network: this.network });
+      if (address2 == null) {
+        return this._buildCreateResponse(false, null, "Could not get address");
+      }
+      const utxos = await this.getUtxos(address2);
       if (utxos.length === 0) {
         return this._buildCreateResponse(false, null, "No UTXOs found for the given address.");
       }
-      return this._buildCreateResponse(false, null, "temp test");
+      const psbt = new bitcoin3.Psbt({ network: this.network });
+      let inputSum = 0;
+      let inputSize = 0;
+      let outputSize = 0;
+      utxos.forEach(async (utxo) => {
+        psbt.addInput({
+          hash: utxo.txid,
+          index: utxo.vout,
+          sequence: 4294967293,
+          witnessUtxo: {
+            script: bitcoin3.address.toOutputScript(address2, this.network),
+            value: utxo.value
+            // satoshis
+          }
+        });
+        inputSum += utxo.value;
+        inputSize += P2WPKH_INPUT_SIZE;
+      });
+      psbt.addOutput({
+        address: recipientAddress,
+        value: amount
+      });
+      outputSize += P2WPKH_OUTPUT_SIZE;
+      outputSize += P2WPKH_OUTPUT_SIZE;
+      const txSize = inputSize + outputSize + 10;
+      if (!feeRate) {
+        const feeRates = await this.getFeeRates();
+        feeRate = feeRates?.economyFee || (this.network == TESTNET2 ? 2 : 5);
+      }
+      if (feeRate < 150) {
+        feeRate = 150;
+      }
+      const fee = txSize * feeRate;
+      const change = inputSum - amount - fee;
+      if (change > 0) {
+        psbt.addOutput({
+          address: address2,
+          value: change
+        });
+      }
+      psbt.signAllInputs(keyPair);
+      psbt.finalizeAllInputs();
+      const transactionHex = psbt.extractTransaction().toHex();
+      return this._buildCreateResponse(true, transactionHex, null);
     }
-    // public async sendTransaction(tx: any, toSign: any, signatures: any, pubkeys: any): Promise<SendTxResponse> {
-    //     const result = await sendTx(tx, toSign, signatures, pubkeys, this.network === TESTNET ? 'testnet' : 'mainnet');
-    //     console.log(result)
-    //     console.log('------------------')
-    //     if (!result.success) {
-    //         return {
-    //             success: false,
-    //             result: null,
-    //             error: result.message ?? 'unkwnown error'
-    //         }
-    //     }
-    //     return {
-    //         success: true,
-    //         result: result,
-    //         error: null
-    //     }
-    // }
-    // public async sendTransaction2(senderWif: string, recipientAddress: string, amount: number) {
-    //     const sender = ECPair.fromWIF(
-    //         senderWif,
-    //         this.network
-    //     );
-    //     const payment1 = createPayment('p2pkh', [sender], this.network);
-    //     const payment2 = createPayment('p2pkh', [sender], this.network);
-    //     console.log({ payment1 })
-    //     console.log({ payment2 })
-    //     const inputData1 = await getInputData(
-    //         2e5,
-    //         payment1.payment,
-    //         true,
-    //         'noredeem',
-    //     );
-    //     const inputData2 = await getInputData(
-    //         7e4,
-    //         payment2.payment,
-    //         true,
-    //         'noredeem',
-    //     );
-    //     const { hash, index, nonWitnessUtxo } = inputData1;
-    //     console.log({ hash, index, nonWitnessUtxo });
-    //     const psbt = new bitcoin.Psbt({ network: this.network })
-    //         .addInput(inputData1)
-    //         .addInput(inputData2)
-    //         .addOutput({
-    //             address: recipientAddress,
-    //             value: 8e4,
-    //         }).addOutput({
-    //             address: payment2.payment.address, // OR script, which is a Buffer.
-    //             value: 1e4,
-    //         });
-    //     const psbtBaseText = psbt.toBase64();
-    //     const signer1 = bitcoin.Psbt.fromBase64(psbtBaseText);
-    //     const signer2 = bitcoin.Psbt.fromBase64(psbtBaseText);
-    //     signer1.signAllInputs(payment1.keys[0]);
-    //     signer2.signAllInputs(payment2.keys[0]);
-    //     const s1text = signer1.toBase64();
-    //     const s2text = signer2.toBase64();
-    //     const final1 = bitcoin.Psbt.fromBase64(s1text);
-    //     const final2 = bitcoin.Psbt.fromBase64(s2text);
-    //     psbt.combine(final1, final2);
-    //     psbt.finalizeAllInputs();
-    //     const tx = psbt.extractTransaction().toHex();
-    //     console.log('----------');
-    //     console.log(tx);
-    //     console.log('----------');
-    //     return tx;
-    // }
+    async broadcastTransaction(transactionHex) {
+      try {
+        const response = await fetch(`${this.apiBaseUrl}/tx`, { method: "POST", body: transactionHex, headers: { "Content-Type": "text/plain" } });
+        if (!response.ok) {
+          const error = await response.text();
+          return this._buildBroadcastResponse(false, null, `Error: ${error}`);
+        }
+        const hash = await response.text();
+        return this._buildBroadcastResponse(true, hash, null);
+      } catch (error) {
+        return this._buildBroadcastResponse(false, null, `Error: ${error}`);
+      }
+    }
   };
 
   // src/btc/account.ts
   var bitcoin4 = __toESM(require_src4());
-
-  // src/btc/constants.ts
-  var SATOSHI_TO_BTC_MULTIPLIER = 1e-8;
-
-  // src/btc/account.ts
   var TESTNET3 = bitcoin4.networks.testnet;
   var MAINNET3 = bitcoin4.networks.bitcoin;
   var AccountService = class {
     constructor(isTestnet) {
       this.network = isTestnet ? TESTNET3 : MAINNET3;
     }
-    async addressInfo(address, inSatoshis = true) {
-      const url = `https://mempool.space${this.network == TESTNET3 ? "/testnet4" : ""}/api/address/${address}`;
+    async addressInfo(address2, inSatoshis = true) {
+      const url = `https://mempool.space${this.network == TESTNET3 ? "/testnet4" : ""}/api/address/${address2}`;
       const response = await fetch(url);
       const result = await response.json();
       const data = result["chain_stats"];
@@ -45864,8 +45860,8 @@
         txCount: data.tx_count
       };
     }
-    async transactions(address, limit = 50, before = null) {
-      let url = `https://api.blockcypher.com/v1/btc/${this.network === TESTNET3 ? "test4" : "main"}/addrs/${address}/full?limit=${limit}`;
+    async transactions(address2, limit = 50, before = null) {
+      let url = `https://api.blockcypher.com/v1/btc/${this.network === TESTNET3 ? "test4" : "main"}/addrs/${address2}/full?limit=${limit}`;
       if (before) {
         url += `&before=${before}`;
       }
