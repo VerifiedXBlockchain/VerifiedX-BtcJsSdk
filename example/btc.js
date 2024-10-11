@@ -45768,7 +45768,7 @@
       return buffer;
     }
     async createTransaction(senderWif, recipientAddress, amount, feeRate = 0) {
-      amount = amount * BTC_TO_SATOSHI_MULTIPLIER;
+      amount = Math.round(amount * BTC_TO_SATOSHI_MULTIPLIER);
       const keyPair = ECPair3.fromWIF(senderWif, this.network);
       const { address: address2 } = bitcoin3.payments.p2wpkh({ pubkey: keyPair.publicKey, network: this.network });
       if (address2 == null) {
@@ -45861,7 +45861,12 @@
       };
     }
     async transactions(address2, limit = 50, before = null) {
-      const url = `https://mempool.space${this.network == TESTNET3 ? "/testnet4" : ""}/api/address/${address2}`;
+      const url = `https://mempool.space${this.network == TESTNET3 ? "/testnet4" : ""}/api/address/${address2}/txs`;
+      console.log(url);
+      const response = await fetch(url);
+      const results = await response.json();
+      console.log(results);
+      return results;
     }
   };
 

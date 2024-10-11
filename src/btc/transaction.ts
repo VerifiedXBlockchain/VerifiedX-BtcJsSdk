@@ -103,7 +103,7 @@ export default class TransactionService {
     }
 
     public async createTransaction(senderWif: string, recipientAddress: string, amount: number, feeRate: number = 0): Promise<CreateTxResponse> {
-        amount = amount * BTC_TO_SATOSHI_MULTIPLIER;
+        amount = Math.round(amount * BTC_TO_SATOSHI_MULTIPLIER);
 
 
         const keyPair: ECPairInterface = ECPair.fromWIF(senderWif, this.network);
