@@ -45633,6 +45633,11 @@
       const keyPair = ECPair2.fromWIF(wif, this.network);
       return this.buildOutput(keyPair);
     }
+    keypairFromPrivateKey(privateKeyString) {
+      const privateKeyBuffer = Buffer.from(privateKeyString, "hex");
+      const keyPair = ECPair2.fromPrivateKey(privateKeyBuffer, { network: this.network });
+      return this.buildOutput(keyPair);
+    }
     keypairFromMnemonic(mnemonic, index = 0) {
       const seed = bip39.mnemonicToSeedSync(mnemonic);
       const root = bip322.fromSeed(seed, this.network);
@@ -45650,7 +45655,7 @@
     keypairFromEmailPassword(email, password, index = 0) {
       email = email.toLowerCase();
       let seed = `${email}|${password}|`;
-      seed = `$seed${seed.length}|!@${(password.length * 7 + email.length) * 7}`;
+      seed = `${seed}${seed.length}|!@${(password.length * 7 + email.length) * 7}`;
       const regChars = /[a-z]+/g;
       const regUpperChars = /[A-Z]+/g;
       const regNumbers = /[0-9]+/g;

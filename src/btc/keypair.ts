@@ -44,6 +44,12 @@ export default class KeypairService {
         return this.buildOutput(keyPair);
     }
 
+    public keypairFromPrivateKey(privateKeyString: string) {
+        const privateKeyBuffer = Buffer.from(privateKeyString, 'hex');
+        const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, { network: this.network });
+        return this.buildOutput(keyPair);
+    }
+
     public keypairFromMnemonic(mnemonic: string, index = 0) {
 
         const seed = bip39.mnemonicToSeedSync(mnemonic);
@@ -69,7 +75,7 @@ export default class KeypairService {
 
         email = email.toLowerCase();
         let seed = `${email}|${password}|`;
-        seed = `$seed${seed.length}|!@${((password.length * 7) + email.length) * 7}`;
+        seed = `${seed}${seed.length}|!@${((password.length * 7) + email.length) * 7}`;
 
         const regChars = /[a-z]+/g;
         const regUpperChars = /[A-Z]+/g;
