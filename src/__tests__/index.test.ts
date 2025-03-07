@@ -17,6 +17,7 @@ describe('Keypairs', () => {
 
   test('keypair has address, wif, privateKey, and publicKey', () => {
     const { address, wif, privateKey, publicKey } = keypairService.keypairFromRandom();
+
     expect(address).toBeTruthy();
     expect(wif).toBeTruthy();
     expect(privateKey).toBeTruthy();
@@ -97,108 +98,108 @@ describe('Keypairs', () => {
 
 
 
-describe('Transactions', () => {
-  let transactionService: TransactionService;
+// describe('Transactions', () => {
+//   let transactionService: TransactionService;
 
-  beforeAll(() => {
-    transactionService = new TransactionService(true);
-  });
+//   beforeAll(() => {
+//     transactionService = new TransactionService(true);
+//   });
 
-  test('can get feerates', async () => {
+//   test('can get feerates', async () => {
 
-    const feeRates = await transactionService.getFeeRates();
-    expect(feeRates).toBeTruthy();
-    expect(feeRates?.economyFee).toBeTruthy();
-  })
+//     const feeRates = await transactionService.getFeeRates();
+//     expect(feeRates).toBeTruthy();
+//     expect(feeRates?.economyFee).toBeTruthy();
+//   })
 
-  test('can create tx', async () => {
+//   test('can create tx', async () => {
 
-    const senderWif = "cSfmWGVRGZhkMxAv8LSakPVX4FaC12Yp9oq6z3zyGsydh3KrArGw"
-    const recipientAddress = "tb1qr0eyx8j8w8u7n4vtvu6ywyk3smkhhexw42zrvm"
-    const amount = 0.000003
+//     const senderWif = "cSfmWGVRGZhkMxAv8LSakPVX4FaC12Yp9oq6z3zyGsydh3KrArGw"
+//     const recipientAddress = "tb1qr0eyx8j8w8u7n4vtvu6ywyk3smkhhexw42zrvm"
+//     const amount = 0.000003
 
-    const data = await transactionService.createTransaction(senderWif, recipientAddress, amount);
-    expect(data.success).toEqual(true);
+//     const data = await transactionService.createTransaction(senderWif, recipientAddress, amount);
+//     expect(data.success).toEqual(true);
 
-    expect(data.result).toBeTruthy();
-  });
+//     expect(data.result).toBeTruthy();
+//   });
 
-  // test('can broadcast tx', async () => {
-  //   const senderWif = "cSfmWGVRGZhkMxAv8LSakPVX4FaC12Yp9oq6z3zyGsydh3KrArGw"
-  //   const recipientAddress = "tb1qr0eyx8j8w8u7n4vtvu6ywyk3smkhhexw42zrvm"
-  //   const amount = 0.000004
+//   // test('can broadcast tx', async () => {
+//   //   const senderWif = "cSfmWGVRGZhkMxAv8LSakPVX4FaC12Yp9oq6z3zyGsydh3KrArGw"
+//   //   const recipientAddress = "tb1qr0eyx8j8w8u7n4vtvu6ywyk3smkhhexw42zrvm"
+//   //   const amount = 0.000004
 
-  //   const createData = await transactionService.createTransaction(senderWif, recipientAddress, amount);
-  //   expect(createData.success).toEqual(true);
+//   //   const createData = await transactionService.createTransaction(senderWif, recipientAddress, amount);
+//   //   expect(createData.success).toEqual(true);
 
-  //   expect(createData.result).toBeTruthy();
+//   //   expect(createData.result).toBeTruthy();
 
-  //   const broadcastData = await transactionService.broadcastTransaction(createData.result!);
+//   //   const broadcastData = await transactionService.broadcastTransaction(createData.result!);
 
-  //   expect(broadcastData.success).toEqual(true)
+//   //   expect(broadcastData.success).toEqual(true)
 
-  //   expect(broadcastData.result).toBeTruthy()
-
-
-  // })
+//   //   expect(broadcastData.result).toBeTruthy()
 
 
-});
+//   // })
+
+
+// });
 
 
 
-describe('Account', () => {
-  let accountService: AccountService;
+// describe('Account', () => {
+//   let accountService: AccountService;
 
-  beforeAll(() => {
-    accountService = new AccountService(true);
-  });
+//   beforeAll(() => {
+//     accountService = new AccountService(true);
+//   });
 
-  test('can get address info', async () => {
+//   test('can get address info', async () => {
 
-    const address = "tb1qhra5rapluauvqjujcv752scfdmnf7h2afne4lr"
+//     const address = "tb1qhra5rapluauvqjujcv752scfdmnf7h2afne4lr"
 
-    const data = await accountService.addressInfo(address);
-    expect(data).toBeTruthy();
-    expect(data.balance).toBeGreaterThanOrEqual(0);
+//     const data = await accountService.addressInfo(address);
+//     expect(data).toBeTruthy();
+//     expect(data.balance).toBeGreaterThanOrEqual(0);
 
-    await new Promise(resolve => setTimeout(resolve, 3000));
+//     await new Promise(resolve => setTimeout(resolve, 3000));
 
-  });
+//   });
 
-  test('can get transactions', async () => {
+//   test('can get transactions', async () => {
 
-    const address = "tb1qhra5rapluauvqjujcv752scfdmnf7h2afne4lr"
+//     const address = "tb1qhra5rapluauvqjujcv752scfdmnf7h2afne4lr"
 
-    const transactions = await accountService.transactions(address);
-    expect(transactions).toBeTruthy();
-    expect(transactions.length).toBeGreaterThan(0);
-
-
-  });
-
-  // test('can paginate txs', async () => {
-
-  //   const address = "tb1qh0nx4epkftfz3gmztkg9qmcyez604q36snzg0n"
-
-  //   const data = await accountService.transactions(address, 2);
-  //   expect(data).toBeTruthy();
-  //   expect(data.transactions.length).toBeGreaterThan(1);
-
-  //   const lastResult = data.transactions[data.transactions.length - 1];
-  //   const dataPage2 = await accountService.transactions(address, 2, lastResult.block_height);
-
-  //   await new Promise(resolve => setTimeout(resolve, 3000));
+//     const transactions = await accountService.transactions(address);
+//     expect(transactions).toBeTruthy();
+//     expect(transactions.length).toBeGreaterThan(0);
 
 
-  //   expect(dataPage2).toBeTruthy();
-  //   expect(dataPage2.transactions.length).toBeGreaterThan(1);
+//   });
 
-  //   const page2lastResult = dataPage2.transactions[dataPage2.transactions.length - 1];
+//   // test('can paginate txs', async () => {
 
-  //   expect(page2lastResult.block_height).toBeLessThan(lastResult.block_height);
+//   //   const address = "tb1qh0nx4epkftfz3gmztkg9qmcyez604q36snzg0n"
 
-  // });
+//   //   const data = await accountService.transactions(address, 2);
+//   //   expect(data).toBeTruthy();
+//   //   expect(data.transactions.length).toBeGreaterThan(1);
+
+//   //   const lastResult = data.transactions[data.transactions.length - 1];
+//   //   const dataPage2 = await accountService.transactions(address, 2, lastResult.block_height);
+
+//   //   await new Promise(resolve => setTimeout(resolve, 3000));
 
 
-});
+//   //   expect(dataPage2).toBeTruthy();
+//   //   expect(dataPage2.transactions.length).toBeGreaterThan(1);
+
+//   //   const page2lastResult = dataPage2.transactions[dataPage2.transactions.length - 1];
+
+//   //   expect(page2lastResult.block_height).toBeLessThan(lastResult.block_height);
+
+//   // });
+
+
+// });

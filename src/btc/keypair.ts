@@ -22,11 +22,12 @@ export default class KeypairService {
 
 
     private buildOutput(keyPair: ECPairInterface, mnemonic: string | null = null) {
-        const address = publicKeyToAddress(keyPair.publicKey, this.network);
+        const addresses = publicKeyToAddress(keyPair.publicKey, this.network);
         const privateKey = keyPair.privateKey?.toString('hex');
 
         return {
-            address: address,
+            address: addresses.bech32,
+            addresses: addresses,
             wif: keyPair.toWIF(),
             privateKey: privateKey,
             publicKey: keyPair.publicKey.toString('hex'),
@@ -43,6 +44,8 @@ export default class KeypairService {
         const keyPair = ECPair.fromWIF(wif, this.network);
         return this.buildOutput(keyPair);
     }
+
+
 
     public keypairFromPrivateKey(privateKeyString: string) {
         const privateKeyBuffer = Buffer.from(privateKeyString, 'hex');

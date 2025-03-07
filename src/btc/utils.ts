@@ -16,10 +16,25 @@ export const regtestUtils = new RegtestUtils({ APIPASS, APIURL });
 const ECPair = ECPairFactory(ecc);
 const bip32 = BIP32Factory(ecc);
 
+bitcoin.initEccLib(ecc);
 
 export const publicKeyToAddress = (publicKey: Buffer, network: bitcoin.Network) => {
 
-    return bitcoin.payments.p2wpkh({ pubkey: publicKey, network: network }).address;
+    const p2pkh = bitcoin.payments.p2pkh({ pubkey: publicKey, network }).address; //P2PKH (Legacy)
+    const p2sh = bitcoin.payments.p2sh({
+        redeem: bitcoin.payments.p2wpkh({ pubkey: publicKey, network }),
+        network
+    }).address;
+    const bech32 = bitcoin.payments.p2wpkh({ pubkey: publicKey, network }).address; // Bech32 (Segwit)
+
+
+    const bech32m = bitcoin.payments.p2tr({ pubkey: publicKey.length === 33 ? publicKey.slice(1) : publicKey, network }).address; // Taproot - P2TR)
+
+    return {
+        p2pkh, p2sh, bech32, bech32m
+    }
+
+
 }
 
 export const wifToPrivateKey = (wif: string, network: bitcoin.Network) => {
