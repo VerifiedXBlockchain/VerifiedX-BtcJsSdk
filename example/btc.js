@@ -45889,8 +45889,101 @@
     }
   };
 
+  // src/btc/client.ts
+  var BtcClient = class {
+    constructor(network = "mainnet", dryRun = false) {
+      this.isTestnet = network === "testnet";
+      this.dryRun = dryRun;
+      this.keypairService = new KeypairService(this.isTestnet);
+      this.transactionService = new TransactionService(this.isTestnet);
+      this.accountService = new AccountService(this.isTestnet);
+    }
+    // Keypair generation and management
+    generatePrivateKey() {
+      return this.keypairService.keypairFromRandom();
+    }
+    generateMnemonic() {
+      return this.keypairService.keypairFromRandomMnemonic();
+    }
+    privateKeyFromMnemonic(mnemonic, index = 0) {
+      return this.keypairService.keypairFromMnemonic(mnemonic, index);
+    }
+    publicFromPrivate(privateKey) {
+      return this.keypairService.keypairFromPrivateKey(privateKey);
+    }
+    addressFromPrivate(privateKey) {
+      return this.keypairService.keypairFromPrivateKey(privateKey);
+    }
+    addressFromWif(wif) {
+      return this.keypairService.keypairFromWif(wif);
+    }
+    getSignature(message, privateKey) {
+      return this.keypairService.signMessageWithPrivateKey(privateKey, message);
+    }
+    getSignatureFromWif(message, wif) {
+      return this.keypairService.signMessage(wif, message);
+    }
+    // Account and address info
+    async getAddressInfo(address2, inSatoshis = true) {
+      return this.accountService.addressInfo(address2, inSatoshis);
+    }
+    async getTransactions(address2, limit = 50, before = null) {
+      return this.accountService.transactions(address2, limit, before);
+    }
+    // Transaction operations
+    async getFeeRates() {
+      return this.transactionService.getFeeRates();
+    }
+    async createTransaction(senderWif, recipientAddress, amount, feeRate = 0) {
+      if (this.dryRun) {
+        return {
+          success: true,
+          result: "dry_run_transaction_hex",
+          error: null
+        };
+      }
+      return this.transactionService.createTransaction(senderWif, recipientAddress, amount, feeRate);
+    }
+    async broadcastTransaction(transactionHex) {
+      if (this.dryRun) {
+        return {
+          success: true,
+          result: "dry_run_transaction_id",
+          error: null
+        };
+      }
+      return this.transactionService.broadcastTransaction(transactionHex);
+    }
+    async sendBtc(senderWif, recipientAddress, amount, feeRate = 0) {
+      const createResult = await this.createTransaction(senderWif, recipientAddress, amount, feeRate);
+      if (!createResult.success || !createResult.result) {
+        console.error("Failed to create transaction:", createResult.error);
+        return null;
+      }
+      const broadcastResult = await this.broadcastTransaction(createResult.result);
+      if (!broadcastResult.success || !broadcastResult.result) {
+        console.error("Failed to broadcast transaction:", broadcastResult.error);
+        return null;
+      }
+      return broadcastResult.result;
+    }
+    // Utility functions
+    async getRawTransaction(txId) {
+      return this.transactionService.getRawTx(txId);
+    }
+    // Additional convenience methods
+    generateEmailKeypair(email, password, index = 0) {
+      return this.keypairService.keypairFromEmailPassword(email, password, index);
+    }
+  };
+
   // src/browser.ts
-  window.btc = { KeypairService, TransactionService, AccountService };
+  window.btc = {
+    KeypairService,
+    TransactionService,
+    AccountService,
+    BtcClient
+  };
 })();
 /*! Bundled license information:
 

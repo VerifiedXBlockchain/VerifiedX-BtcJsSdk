@@ -102,7 +102,7 @@ export default class TransactionService {
         return buffer;
     }
 
-    public async createTransaction(senderWif: string, recipientAddress: string, amount: number, feeRate: number = 0): Promise<CreateTxResponse> {
+    public async createTransaction(senderWif: string, recipientAddress: string, amount: number, feeRate = 0): Promise<CreateTxResponse> {
         amount = Math.round(amount * BTC_TO_SATOSHI_MULTIPLIER);
 
 
@@ -161,7 +161,7 @@ export default class TransactionService {
             feeRate = 5;
         }
 
-        const fee = txSize * feeRate!;
+        const fee = txSize * feeRate;
 
         const change = inputSum - amount - fee;
         if (change > 0) {
