@@ -3,7 +3,7 @@ import { ECPairFactory, ECPairInterface } from 'ecpair';
 
 import * as bitcoin from 'bitcoinjs-lib';
 import ecc from '@bitcoinerlab/secp256k1';
-import { BTC_TO_SATOSHI_MULTIPLIER } from './constants';
+import { BTC_TO_SATOSHI_MULTIPLIER, apiBaseUrl } from './constants';
 
 
 
@@ -41,7 +41,7 @@ export default class TransactionService {
 
     constructor(isTestnet: boolean) {
         this.network = isTestnet ? TESTNET : MAINNET;
-        this.apiBaseUrl = isTestnet ? 'https://mempool.space/testnet4/api' : 'https://mempool.space/api';
+        this.apiBaseUrl = apiBaseUrl(isTestnet);
     }
 
     private _buildCreateResponse(success: boolean, result: string | null, error: string | null = null): CreateTxResponse {
