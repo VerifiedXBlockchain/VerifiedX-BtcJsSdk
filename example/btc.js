@@ -45727,6 +45727,9 @@
   // src/btc/constants.ts
   var BTC_TO_SATOSHI_MULTIPLIER = 1e8;
   var SATOSHI_TO_BTC_MULTIPLIER = 1e-8;
+  var MAINNET_API_BASE_URL = "https://mempool.space/api";
+  var TESTNET_API_BASE_URL = "https://signet.verifiedx.io/api";
+  var apiBaseUrl = (isTestnet) => isTestnet ? TESTNET_API_BASE_URL : MAINNET_API_BASE_URL;
 
   // src/btc/transaction.ts
   var ECPair3 = (0, import_ecpair3.ECPairFactory)(import_secp256k13.default);
@@ -45737,7 +45740,7 @@
   var TransactionService = class {
     constructor(isTestnet) {
       this.network = isTestnet ? TESTNET2 : MAINNET2;
-      this.apiBaseUrl = isTestnet ? "https://mempool.space/testnet4/api" : "https://mempool.space/api";
+      this.apiBaseUrl = apiBaseUrl(isTestnet);
     }
     _buildCreateResponse(success, result, error = null) {
       if (!success) {
@@ -45864,9 +45867,10 @@
   var AccountService = class {
     constructor(isTestnet) {
       this.network = isTestnet ? TESTNET3 : MAINNET3;
+      this.apiBaseUrl = apiBaseUrl(isTestnet);
     }
     async addressInfo(address2, inSatoshis = true) {
-      const url = `https://mempool.space${this.network == TESTNET3 ? "/testnet4" : ""}/api/address/${address2}`;
+      const url = `${this.apiBaseUrl}/address/${address2}`;
       const response = await fetch(url);
       const result = await response.json();
       const data = result["chain_stats"];
@@ -45880,7 +45884,7 @@
       };
     }
     async transactions(address2, limit = 50, before = null) {
-      const url = `https://mempool.space${this.network == TESTNET3 ? "/testnet4" : ""}/api/address/${address2}/txs`;
+      const url = `${this.apiBaseUrl}/address/${address2}/txs`;
       console.log(url);
       const response = await fetch(url);
       const results = await response.json();
